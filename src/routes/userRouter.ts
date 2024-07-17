@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { allUsers, createUser, deleteUser, getUser } from "../controllers/userController";
+import { createUserValidation } from "../validations/userValidation";
+
+export const userRouter = Router();
+
+userRouter.get("/allusers", allUsers);
+userRouter.get("/:id", getUser);
+userRouter.post("/create", createUserValidation, createUser);
+userRouter.post("/delete/:id", deleteUser);

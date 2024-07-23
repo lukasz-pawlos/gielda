@@ -15,7 +15,7 @@ export const trade = async () => {
   console.log("START");
   const companysIds = await getCompanysIdServices();
 
-  console.log("Start treading Offers");
+  console.log("Get treading Offers");
   for (const companyId of companysIds) {
     await updateData(companyId);
 
@@ -23,57 +23,16 @@ export const trade = async () => {
 
     if (!buyOffers[companyId].length || !sellOffers[companyId].length) continue;
 
-    for (let buyOffer of buyOffers[companyId]) {
-      // console.log(buyOffer.max_price < sellOffers[companyId][sellOffers[companyId].length - 1].min_price);
-      // if (buyOffer.max_price < sellOffers[companyId][sellOffers[companyId].length - 1].min_price) continue;
-
-      for (let sellOffer of sellOffers[companyId]) {
-        if (buyOffer.max_price < sellOffer.min_price) {
-          continue;
-        }
-        const amount = Math.min(buyOffer.amount, sellOffer.amount);
-        const price = (+buyOffer.max_price + +sellOffer.min_price) / 2;
-        console.log("Create Transactions");
-        const newTransaction: TransactionRequest = {
-          sellOffer: sellOffer,
-          buyOffer: buyOffer,
-          amount,
-          price,
-          transactionData: new Date(),
-        };
-
-        await createTransactionService(newTransaction);
-        console.log("Create Transactions DONE");
-
-        buyOffer.amount -= amount;
-        sellOffer.amount -= amount;
-
-        if (buyOffer.amount === 0) {
-          buyOffer.actual = false;
-        }
-
-        if (sellOffer.amount === 0) {
-          sellOffer.actual = false;
-        }
-
-        console.log("Update data in DB");
-        await updateSellOfferService(sellOffer);
-        // TODO update stock, user.monye, create new table,
-        // sellOfferHistory (on create sellOfera create the same in history,
-        // and if amount === 0, set actual to false)
-        await updateBuyOfferService(buyOffer);
-        // TODO update stock_rate
-        // sellOfferBuy (on create buyOfera create the same in history,
-        // and if amount === 0, set actual to false)
-        console.log("Update data in DB");
-        if (buyOffer.amount === 0) break;
-      }
-    }
+    console.log("START TREADING");
+    await startTrade(buyOffers[companyId], sellOffers[companyId]);
 
     // Clear done transaction from array
     buyOffers[companyId] = clearDoneOffers(buyOffers[companyId]);
     sellOffers[companyId] = clearDoneOffers(sellOffers[companyId]);
   }
+
+  console.log("Trade cycle complete. Scheduling next run.");
+  setTimeout(trade, 5 * 1000); // Trade again after 5 s
 };
 
 const updateData = async (companyId: number) => {
@@ -87,8 +46,52 @@ const updateData = async (companyId: number) => {
     const skipSellIds: number[] = !sellOffers[companyId].length ? [] : sellOffers[companyId].map((offer) => offer.id);
 
     console.log("Get Offers");
+    console.log(buyOffers[companyId].length);
     buyOffers[companyId] = buyOffers[companyId].concat(await companysBuyOfferService(companyId, skipBuyIds));
     sellOffers[companyId] = sellOffers[companyId].concat(await companysSellOfferService(companyId, skipSellIds));
+    console.log(buyOffers[companyId].length);
+  }
+};
+
+const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[]) => {
+  let i = 0,
+    j = 0;
+  while (i < buyOffers.length && j < sellOffers.length) {
+    if (+buyOffers[i].max_price < +sellOffers[j].min_price) {
+      j++;
+    } else {
+      const amount = Math.min(buyOffers[i].amount, sellOffers[j].amount);
+      if (amount === 0) {
+        if (buyOffers[i].amount === 0) i++;
+        if (sellOffers[j].amount === 0) j++;
+        continue;
+      }
+      const price = parseFloat(((+buyOffers[i].max_price + +sellOffers[j].min_price) / 2).toFixed(2));
+
+      console.log("Create Transactions");
+
+      const newTransaction: TransactionRequest = {
+        sellOffer: sellOffers[j],
+        buyOffer: buyOffers[i],
+        amount,
+        price,
+        transactionData: new Date(),
+      };
+
+      await createTransactionService(newTransaction);
+
+      buyOffers[i].amount -= amount;
+      sellOffers[j].amount -= amount;
+
+      buyOffers[i].actual = buyOffers[i].amount !== 0;
+      sellOffers[j].actual = sellOffers[j].amount !== 0;
+
+      await updateBuyOfferService(buyOffers[i]);
+      await updateSellOfferService(sellOffers[j]);
+
+      if (buyOffers[i].amount === 0) i++;
+      if (sellOffers[j].amount === 0) j++;
+    }
   }
 };
 

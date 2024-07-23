@@ -5,13 +5,15 @@ import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
 import { Company } from "../entities/CompanyEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
+import { BuyOfferRes } from "../dto/response/BuyOfferRes";
+import { In, Not } from "typeorm";
 
 export const createBuyOfferService = async (
   req: TypedRequestBody<BuyOfferRequest>,
   res: Response,
   next: NextFunction
 ) => {
-  const { companyId, userId, max_price, start_amount, date_limit } = req.body;
+  const { companyId, userId, max_price, amount, date_limit } = req.body;
 
   const user = await User.findOne({ where: { id: userId } });
   const company = await Company.findOne({ where: { id: companyId } });
@@ -24,7 +26,8 @@ export const createBuyOfferService = async (
     user,
     company,
     max_price,
-    start_amount,
+    amount,
+    start_amount: amount,
     actual: true,
     date_limit,
   });
@@ -37,7 +40,7 @@ export const deleteBuyOfferService = async (req: Request, res: Response, next: N
 
   const buyOffer = await BuyOffer.findOne({ where: { id } });
   if (!buyOffer) {
-    return next(new AppError("Sell offer not found", 404));
+    return next(new AppError("Delete offer not found", 404));
   }
 
   await BuyOffer.delete({ id });
@@ -56,4 +59,26 @@ export const usersBuyOfferService = async (req: Request, res: Response, next: Ne
   const buyOffers = await BuyOffer.find({ where: { user } });
 
   return buyOffers;
+};
+
+export const companysBuyOfferService = async (
+  companyId: number,
+  skipIds: number[],
+  recordsNumber: number = 100
+): Promise<BuyOfferRes[]> => {
+  const buyOffers = await BuyOffer.find({
+    where: { actual: true, company: { id: companyId }, id: Not(In(skipIds)) },
+    order: { id: "ASC", max_price: "ASC" },
+    take: recordsNumber,
+  });
+
+  if (!buyOffers) {
+    throw new AppError("BuyOffers not found", 404);
+  }
+
+  return buyOffers;
+};
+
+export const updateBuyOfferService = async (buyOffer: any) => {
+  await BuyOffer.save(buyOffer);
 };

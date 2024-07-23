@@ -11,7 +11,7 @@ export class BuyOffer extends BaseEntity {
   @ManyToOne(() => Company, (company) => company.buyOffers)
   company: Company;
 
-  @Column("decimal", { precision: 6 })
+  @Column("decimal", { scale: 2 })
   max_price: number;
 
   @Column()
@@ -22,6 +22,9 @@ export class BuyOffer extends BaseEntity {
 
   @Column()
   actual: boolean;
+
+  @Column()
+  amount: number;
 
   @OneToMany(() => TransactionD, (TransactionD) => TransactionD.buyOffer)
   transactions: TransactionD[];

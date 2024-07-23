@@ -3,7 +3,12 @@ import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
 import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
-import { createBuyOfferService, deleteBuyOfferService, usersBuyOfferService } from "../services/buyOfferService";
+import {
+  companysBuyOfferService,
+  createBuyOfferService,
+  deleteBuyOfferService,
+  usersBuyOfferService,
+} from "../services/buyOfferService";
 
 export const createBuyOffer = async (req: TypedRequestBody<BuyOfferRequest>, res: Response, next: NextFunction) => {
   const error = validationResult(req);

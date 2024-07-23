@@ -15,6 +15,6 @@ export class StockRate extends BaseEntity {
   @Column()
   actual: boolean;
 
-  @Column("decimal", { precision: 6 })
+  @Column("decimal", { scale: 2 })
   rate: number;
 }

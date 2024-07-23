@@ -16,7 +16,7 @@ export class TransactionD extends BaseEntity {
   @Column()
   amount: number;
 
-  @Column()
+  @Column("decimal", { scale: 2 })
   price: number;
 
   @Column()

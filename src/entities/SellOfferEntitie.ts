@@ -9,7 +9,7 @@ export class SellOffer extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column("decimal", { precision: 6 })
+  @Column("decimal", { scale: 2 })
   min_price: number;
 
   @Column()
@@ -20,6 +20,9 @@ export class SellOffer extends BaseEntity {
 
   @Column()
   actual: boolean;
+
+  @Column()
+  amount: number;
 
   @OneToMany(() => TransactionD, (TransactionD) => TransactionD.sellOffer)
   transactions: TransactionD[];

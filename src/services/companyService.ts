@@ -20,6 +20,16 @@ export const getCompanyService = async (req: Request, res: Response, next: NextF
   return company;
 };
 
+export const getCompanysIdServices = async () => {
+  const companysId = await Company.find();
+
+  // if (!companysId.length) {
+  //   throw new Error("Companys not found");
+  // }
+
+  return companysId.map((obj) => obj.id);
+};
+
 export const createCompanyService = async (req: TypedRequestBody<CompanyRequest>, res: Response) => {
   const { name } = req.body;
 

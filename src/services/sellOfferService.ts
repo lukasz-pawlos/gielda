@@ -5,13 +5,16 @@ import { User } from "../entities/UsesEntitie";
 import { Stock } from "../entities/StockEntities";
 import { AppError } from "../utils/appError";
 import { SellOffer } from "../entities/SellOfferEntitie";
+import { Company } from "../entities/CompanyEntities";
+import { In, Not } from "typeorm";
+import { SellOfferRes } from "../dto/response/SellOfferRes";
 
 export const createSellOfferService = async (
   req: TypedRequestBody<SellOfferRequest>,
   res: Response,
   next: NextFunction
 ) => {
-  const { stockId, userId, min_price, start_amount, date_limit } = req.body;
+  const { stockId, userId, min_price, amount, date_limit } = req.body;
 
   const user = await User.findOne({ where: { id: userId } });
   const stock = await Stock.findOne({ where: { id: stockId } });
@@ -24,7 +27,8 @@ export const createSellOfferService = async (
     user,
     stock,
     min_price,
-    start_amount,
+    amount,
+    start_amount: amount,
     actual: true,
     date_limit,
   });
@@ -56,4 +60,30 @@ export const usersSellOfferService = async (req: Request, res: Response, next: N
   const sellOffers = await SellOffer.find({ where: { user } });
 
   return sellOffers;
+};
+
+export const companysSellOfferService = async (
+  companyId: number,
+  skipIds: number[],
+  recordsNumber: number = 100
+): Promise<SellOfferRes[]> => {
+  const company = await SellOffer.find({
+    where: {
+      actual: true,
+      stock: { company: { id: companyId } },
+      id: Not(In(skipIds)),
+    },
+    order: { id: "ASC", min_price: "ASC" },
+    take: recordsNumber,
+  });
+
+  if (!company) {
+    throw new AppError("Offers not found", 404);
+  }
+
+  return company;
+};
+
+export const updateSellOfferService = async (sellOffer: any) => {
+  await SellOffer.save(sellOffer);
 };

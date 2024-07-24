@@ -4,26 +4,31 @@ import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
 import { UserRequest } from "../dto/request/userRequest";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
+import { catchAsync } from "../utils/catchAsync";
 
-export const allUsers = async (req: Request, res: Response) => {
-  const users = await findAllUsersService(req, res);
+export const allUsers = catchAsync(async (req: Request, res: Response) => {
+  const users = await findAllUsersService();
   res.json({ users });
-};
+});
 
-export const getUser = async (req: Request, res: Response, next: NextFunction) => {
-  const user = await getUserService(req, res, next);
+export const getUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const userId: any = req.params.id;
+
+  const user = await getUserService(userId);
   res.json(user);
-};
+});
 
-export const createUser = async (req: TypedRequestBody<UserRequest>, res: Response, next: NextFunction) => {
+export const createUser = catchAsync(async (req: TypedRequestBody<UserRequest>, res: Response, next: NextFunction) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
     return next(new AppError("Validation errors", 400, error.array()));
   }
-  const result = await createUserService(req, res);
+  const result = await createUserService(req.body);
   res.json({ message: "User added", result });
-};
+});
 
-export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
-  await deleteUserService(req, res, next);
-};
+export const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const userId: any = req.params.id;
+  await deleteUserService(userId);
+  res.status(200).json({ message: "User deleted successfully" });
+});

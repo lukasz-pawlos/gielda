@@ -1,11 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "../entities/UsesEntitie";
 import { AppError } from "../utils/appError";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { UserRequest } from "../dto/request/userRequest";
 
-export const createUserService = async (req: TypedRequestBody<UserRequest>, res: Response) => {
-  const { name, surname, username, password, email } = req.body;
+export const createUserService = async (newUserData: UserRequest) => {
+  const { name, surname, username, password, email } = newUserData;
 
   const newUser = await User.save({
     name,
@@ -19,30 +18,26 @@ export const createUserService = async (req: TypedRequestBody<UserRequest>, res:
   return newUser;
 };
 
-export const getUserService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-  const user = await User.findOne({ where: { id } });
+export const getUserService = async (userId: number) => {
+  const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
-    return next(new AppError("User not found", 404));
+    throw new AppError("User not found", 404);
   }
 
   return user;
 };
 
-export const findAllUsersService = async (req: Request, res: Response) => {
+export const findAllUsersService = async () => {
   const users = await User.find();
-  if (users) return users;
+  return users;
 };
 
-export const deleteUserService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const user = await User.findOne({ where: { id } });
+export const deleteUserService = async (userId: number) => {
+  const user = await User.findOne({ where: { id: userId } });
   if (!user) {
-    return next(new AppError("User not found", 404));
+    throw new AppError("User not found", 404);
   }
 
-  await User.delete({ id });
-  res.status(200).json({ message: "User deleted successfully" });
+  await User.delete({ id: userId });
 };

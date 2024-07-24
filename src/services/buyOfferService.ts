@@ -8,18 +8,14 @@ import { BuyOffer } from "../entities/BuyOfferEntitie";
 import { BuyOfferRes } from "../dto/response/BuyOfferRes";
 import { In, Not } from "typeorm";
 
-export const createBuyOfferService = async (
-  req: TypedRequestBody<BuyOfferRequest>,
-  res: Response,
-  next: NextFunction
-) => {
-  const { companyId, userId, max_price, amount, date_limit } = req.body;
+export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) => {
+  const { companyId, userId, max_price, amount, date_limit } = newBuyOfferData;
 
   const user = await User.findOne({ where: { id: userId } });
   const company = await Company.findOne({ where: { id: companyId } });
 
   if (!user || !company) {
-    return next(new AppError("User or Company not found", 404));
+    throw new AppError("User or Company not found", 404);
   }
 
   const newBuyOffer = await BuyOffer.save({
@@ -35,25 +31,20 @@ export const createBuyOfferService = async (
   return newBuyOffer;
 };
 
-export const deleteBuyOfferService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const buyOffer = await BuyOffer.findOne({ where: { id } });
+export const deleteBuyOfferService = async (buyOfferId: number) => {
+  const buyOffer = await BuyOffer.findOne({ where: { id: buyOfferId } });
   if (!buyOffer) {
-    return next(new AppError("Delete offer not found", 404));
+    throw new AppError("Delete offer not found", 404);
   }
 
-  await BuyOffer.delete({ id });
-  res.status(200).json({ message: "Sell offer deleted successfully" });
+  await BuyOffer.delete({ id: buyOfferId });
 };
 
-export const usersBuyOfferService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const user = await User.findOne({ where: { id } });
+export const usersBuyOfferService = async (userId: number) => {
+  const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
-    return next(new AppError("User not found", 404));
+    throw new AppError("User not found", 404);
   }
 
   const buyOffers = await BuyOffer.find({ where: { user } });

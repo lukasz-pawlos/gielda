@@ -1,20 +1,17 @@
 import { CompanyRequest } from "../dto/request/CompanyRequest";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { Company } from "../entities/CompanyEntities";
-import { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/appError";
 
-export const findAllCompaniesService = async (req: Request, res: Response) => {
+export const findAllCompaniesService = async () => {
   const company = await Company.find();
-  if (company) return company;
+  return company;
 };
 
-export const getCompanyService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
+export const getCompanyService = async (companyId: number) => {
+  const company = await Company.findOne({ where: { id: companyId } });
 
-  const company = await Company.findOne({ where: { id } });
   if (!company) {
-    return next(new AppError("Company not found", 404));
+    throw new AppError("Company not found", 404);
   }
 
   return company;
@@ -23,29 +20,26 @@ export const getCompanyService = async (req: Request, res: Response, next: NextF
 export const getCompanysIdServices = async () => {
   const companysId = await Company.find();
 
-  // if (!companysId.length) {
-  //   throw new Error("Companys not found");
-  // }
+  if (!companysId.length) {
+    return companysId;
+  }
 
   return companysId.map((obj) => obj.id);
 };
 
-export const createCompanyService = async (req: TypedRequestBody<CompanyRequest>, res: Response) => {
-  const { name } = req.body;
+export const createCompanyService = async (newComapnyData: CompanyRequest) => {
+  const { name } = newComapnyData;
 
   const newCompany = await Company.save({ name });
 
   return newCompany;
 };
 
-export const deleteCompanyService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const company = await Company.findOne({ where: { id } });
+export const deleteCompanyService = async (companyId: number) => {
+  const company = await Company.findOne({ where: { id: companyId } });
   if (!company) {
-    return next(new AppError("Company not found", 404));
+    throw new AppError("Company not found", 404);
   }
 
-  await Company.delete({ id });
-  res.status(200).json({ message: "Company deleted successfully" });
+  await Company.delete({ id: companyId });
 };

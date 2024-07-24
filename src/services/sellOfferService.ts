@@ -1,6 +1,4 @@
-import { NextFunction, Request, Response } from "express";
 import { SellOfferRequest } from "../dto/request/SellOfferRequest";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { User } from "../entities/UsesEntitie";
 import { Stock } from "../entities/StockEntities";
 import { AppError } from "../utils/appError";
@@ -9,18 +7,14 @@ import { Company } from "../entities/CompanyEntities";
 import { In, Not } from "typeorm";
 import { SellOfferRes } from "../dto/response/SellOfferRes";
 
-export const createSellOfferService = async (
-  req: TypedRequestBody<SellOfferRequest>,
-  res: Response,
-  next: NextFunction
-) => {
-  const { stockId, userId, min_price, amount, date_limit } = req.body;
+export const createSellOfferService = async (newSellOfferData: SellOfferRequest) => {
+  const { stockId, userId, min_price, amount, date_limit } = newSellOfferData;
 
   const user = await User.findOne({ where: { id: userId } });
   const stock = await Stock.findOne({ where: { id: stockId } });
 
   if (!user || !stock) {
-    return next(new AppError("User or Stock not found", 404));
+    throw new AppError("User or Stock not found", 404);
   }
 
   const newSellOffer = await SellOffer.save({
@@ -36,25 +30,20 @@ export const createSellOfferService = async (
   return newSellOffer;
 };
 
-export const deleteSellOfferService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const sellOffer = await SellOffer.findOne({ where: { id } });
+export const deleteSellOfferService = async (sellOfferId: number) => {
+  const sellOffer = await SellOffer.findOne({ where: { id: sellOfferId } });
   if (!sellOffer) {
-    return next(new AppError("Buy offer not found", 404));
+    throw new AppError("Buy offer not found", 404);
   }
 
-  await SellOffer.delete({ id });
-  res.status(200).json({ message: "Sell offer deleted successfully" });
+  await SellOffer.delete({ id: sellOfferId });
 };
 
-export const usersSellOfferService = async (req: Request, res: Response, next: NextFunction) => {
-  const id: any = req.params.id;
-
-  const user = await User.findOne({ where: { id } });
+export const usersSellOfferService = async (userId: number) => {
+  const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
-    return next(new AppError("User not found", 404));
+    throw new AppError("User not found", 404);
   }
 
   const sellOffers = await SellOffer.find({ where: { user } });

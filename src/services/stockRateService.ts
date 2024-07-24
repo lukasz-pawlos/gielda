@@ -5,23 +5,19 @@ import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
 import { StockRate } from "../entities/StockRateEntitie";
 
-export const allStockRatesService = async (req: Request, res: Response) => {
-  const stockRates = await StockRate.find();
+export const allActualStockRatesService = async () => {
+  const stockRates = await StockRate.find({ where: { actual: true } });
 
   return stockRates;
 };
 
-export const createStockRateService = async (
-  req: TypedRequestBody<StockRateRequest>,
-  res: Response,
-  next: NextFunction
-) => {
-  const { companyId, rate } = req.body;
+export const createStockRateService = async (newStockRateDate: StockRateRequest) => {
+  const { companyId, rate } = newStockRateDate;
 
   const company = await Company.findOne({ where: { id: companyId } });
 
   if (!company) {
-    return next(new AppError("Company not found", 404));
+    throw new AppError("Company not found", 404);
   }
 
   const newStockRate = StockRate.create({

@@ -3,20 +3,23 @@ import { AppError } from "../utils/appError";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { NextFunction, Request, Response } from "express";
 import { StockRateRequest } from "../dto/request/StockRateRequest";
-import { createStockRateService, allStockRatesService } from "../services/stockRateService";
+import { createStockRateService, allActualStockRatesService } from "../services/stockRateService";
+import { catchAsync } from "../utils/catchAsync";
 
-export const allStockRates = async (req: Request, res: Response) => {
-  const stockRates = await allStockRatesService(req, res);
+export const allActualStockRates = catchAsync(async (req: Request, res: Response) => {
+  const stockRates = await allActualStockRatesService();
   res.json({ stockRates });
-};
+});
 
-export const createStockRate = async (req: TypedRequestBody<StockRateRequest>, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
+export const createStockRate = catchAsync(
+  async (req: TypedRequestBody<StockRateRequest>, res: Response, next: NextFunction) => {
+    const errors = validationResult(req);
 
-  if (!errors.isEmpty()) {
-    return next(new AppError("Validation errors", 400, errors.array()));
+    if (!errors.isEmpty()) {
+      return next(new AppError("Validation errors", 400, errors.array()));
+    }
+
+    const result = await createStockRateService(req.body);
+    res.json({ message: "Stock added", result });
   }
-
-  const result = await createStockRateService(req, res, next);
-  res.json({ message: "Stock added", result });
-};
+);

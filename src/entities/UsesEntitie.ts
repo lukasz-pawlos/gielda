@@ -8,22 +8,22 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
+  @Column()
   name: string;
 
-  @Column({ nullable: false })
+  @Column()
   surname: string;
 
-  @Column({ nullable: false })
+  @Column()
   username: string;
 
-  @Column({ nullable: false })
+  @Column()
   password: string;
 
-  @Column({ nullable: false })
+  @Column()
   email: string;
 
-  @Column()
+  @Column("decimal", { scale: 2 })
   money: number;
 
   @OneToMany(() => Stock, (stock) => stock.user)

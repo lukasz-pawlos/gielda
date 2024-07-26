@@ -3,7 +3,6 @@ import { User } from "../entities/UsesEntitie";
 import { Stock } from "../entities/StockEntities";
 import { AppError } from "../utils/appError";
 import { SellOffer } from "../entities/SellOfferEntitie";
-import { Company } from "../entities/CompanyEntities";
 import { In, Not } from "typeorm";
 import { SellOfferRes } from "../dto/response/SellOfferRes";
 
@@ -16,6 +15,14 @@ export const createSellOfferService = async (newSellOfferData: SellOfferRequest)
   if (!user || !stock) {
     throw new AppError("User or Stock not found", 404);
   }
+
+  if (+stock.amount - +amount < 0) {
+    throw new AppError("Not enough stock", 402);
+  }
+
+  stock.amount -= +amount;
+
+  await stock.save();
 
   const newSellOffer = await SellOffer.save({
     user,
@@ -31,10 +38,12 @@ export const createSellOfferService = async (newSellOfferData: SellOfferRequest)
 };
 
 export const deleteSellOfferService = async (sellOfferId: number) => {
-  const sellOffer = await SellOffer.findOne({ where: { id: sellOfferId } });
+  const sellOffer = await SellOffer.findOne({ where: { id: sellOfferId }, relations: { stock: true } });
   if (!sellOffer) {
     throw new AppError("Buy offer not found", 404);
   }
+
+  sellOffer.stock.amount += sellOffer.amount;
 
   await SellOffer.delete({ id: sellOfferId });
 };
@@ -51,7 +60,7 @@ export const usersSellOfferService = async (userId: number) => {
   return sellOffers;
 };
 
-export const companysSellOfferService = async (
+export const sellOffersToTradeService = async (
   companyId: number,
   skipIds: number[],
   recordsNumber: number = 100

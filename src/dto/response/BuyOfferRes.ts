@@ -5,4 +5,5 @@ export interface BuyOfferRes {
   actual: boolean;
   start_amount: number;
   date_limit: Date;
+  userId: number;
 }

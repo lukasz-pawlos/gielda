@@ -1,4 +1,3 @@
-import { NextFunction, Request, Response } from "express";
 import { User } from "../entities/UsesEntitie";
 import { AppError } from "../utils/appError";
 import { UserRequest } from "../dto/request/userRequest";
@@ -40,4 +39,8 @@ export const deleteUserService = async (userId: number) => {
   }
 
   await User.delete({ id: userId });
+};
+
+export const updateUserService = async (user: User) => {
+  await User.save(user);
 };

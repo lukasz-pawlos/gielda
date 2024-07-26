@@ -1,5 +1,3 @@
-import { NextFunction, Request, Response } from "express";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { StockRequest } from "../dto/request/StockRequest";
 import { Stock } from "../entities/StockEntities";
 import { User } from "../entities/UsesEntitie";
@@ -48,4 +46,19 @@ export const getStockByUserIdService = async (userId: number) => {
   }
 
   return { stock, user };
+};
+
+export const updateStockByUserAndCompanyIdService = async (userId: number, companyId: number, amount: number) => {
+  const stock = await Stock.findOne({
+    where: { company: { id: companyId }, user: { id: userId } },
+    relations: { user: true, company: true },
+  });
+
+  if (!stock) {
+    await createStockService({ companyId, userId, amount });
+    return;
+  }
+
+  stock.amount = +stock.amount + +amount;
+  await stock.save();
 };

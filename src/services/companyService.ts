@@ -21,7 +21,7 @@ export const getCompanysIdServices = async () => {
   const companysId = await Company.find();
 
   if (!companysId.length) {
-    return companysId;
+    return [];
   }
 
   return companysId.map((obj) => obj.id);

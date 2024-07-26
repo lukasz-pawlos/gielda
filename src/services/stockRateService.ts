@@ -1,5 +1,3 @@
-import { NextFunction, Request, Response } from "express";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { StockRateRequest } from "../dto/request/StockRateRequest";
 import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
@@ -23,6 +21,27 @@ export const createStockRateService = async (newStockRateDate: StockRateRequest)
   const newStockRate = StockRate.create({
     company,
     date_inc: new Date().toJSON(),
+    actual: true,
+    rate,
+  });
+
+  return newStockRate.save();
+};
+
+export const updateStockRateByCompanyIdService = async (stockRateDate: StockRateRequest) => {
+  const { companyId, rate } = stockRateDate;
+
+  const company = await Company.findOne({ where: { id: companyId } });
+
+  if (!company) {
+    throw new AppError("Company not found", 404);
+  }
+
+  await StockRate.update({ company, actual: true }, { actual: false });
+
+  const newStockRate = StockRate.create({
+    company,
+    date_inc: new Date().toISOString(),
     actual: true,
     rate,
   });

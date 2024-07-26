@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { TransactionD } from "../entities/TransactionEntitie";
 import { TransactionRequest } from "../dto/request/TransactionRequest";
 

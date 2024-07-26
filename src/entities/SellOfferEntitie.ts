@@ -1,4 +1,4 @@
-import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, RelationId } from "typeorm";
 import { Company } from "./CompanyEntities";
 import { User } from "./UsesEntitie";
 import { Stock } from "./StockEntities";
@@ -32,4 +32,7 @@ export class SellOffer extends BaseEntity {
 
   @ManyToOne(() => User, (user) => user.sellOffers)
   user: User;
+
+  @RelationId((sellOffer: SellOffer) => sellOffer.user)
+  userId: number;
 }

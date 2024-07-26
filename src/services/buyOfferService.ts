@@ -1,12 +1,11 @@
-import { NextFunction, Request, Response } from "express";
 import { User } from "../entities/UsesEntitie";
 import { AppError } from "../utils/appError";
-import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
 import { Company } from "../entities/CompanyEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
 import { BuyOfferRes } from "../dto/response/BuyOfferRes";
 import { In, Not } from "typeorm";
+import { updateUserService } from "./userService";
 
 export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) => {
   const { companyId, userId, max_price, amount, date_limit } = newBuyOfferData;
@@ -18,6 +17,15 @@ export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) =>
     throw new AppError("User or Company not found", 404);
   }
 
+  const estimatedPrice = amount * +max_price;
+
+  if (+user.money - +estimatedPrice < 0) {
+    throw new AppError("Not enough money", 402);
+  }
+
+  user.money -= +estimatedPrice;
+  user.save();
+
   const newBuyOffer = await BuyOffer.save({
     user,
     company,
@@ -28,16 +36,21 @@ export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) =>
     date_limit,
   });
 
+  await updateUserService(user);
+
   return newBuyOffer;
 };
 
 export const deleteBuyOfferService = async (buyOfferId: number) => {
-  const buyOffer = await BuyOffer.findOne({ where: { id: buyOfferId } });
+  const buyOffer = await BuyOffer.findOne({ where: { id: buyOfferId }, relations: { user: true } });
   if (!buyOffer) {
     throw new AppError("Delete offer not found", 404);
   }
 
+  buyOffer.user.money += +buyOffer.amount * +buyOffer.max_price;
+
   await BuyOffer.delete({ id: buyOfferId });
+  await updateUserService(buyOffer.user);
 };
 
 export const usersBuyOfferService = async (userId: number) => {
@@ -52,7 +65,7 @@ export const usersBuyOfferService = async (userId: number) => {
   return buyOffers;
 };
 
-export const companysBuyOfferService = async (
+export const buyOffersToTradeService = async (
   companyId: number,
   skipIds: number[],
   recordsNumber: number = 100

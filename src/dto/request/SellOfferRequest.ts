@@ -1,5 +1,5 @@
 export interface SellOfferRequest {
-  stockId: number;
+  companyId: number;
   userId: number;
   min_price: number;
   amount: number;

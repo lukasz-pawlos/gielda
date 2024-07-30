@@ -58,7 +58,6 @@ export const updateStockByUserAndCompanyIdService = async (userId: number, compa
     await createStockService({ companyId, userId, amount });
     return;
   }
-
-  stock.amount = +stock.amount + +amount;
+  stock.amount = +stock.amount + amount;
   await stock.save();
 };

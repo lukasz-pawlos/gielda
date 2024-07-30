@@ -4,7 +4,7 @@ import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
 import { Company } from "../entities/CompanyEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
 import { BuyOfferRes } from "../dto/response/BuyOfferRes";
-import { In, Not } from "typeorm";
+import { In, Not, Raw } from "typeorm";
 import { updateUserService } from "./userService";
 
 export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) => {
@@ -24,7 +24,7 @@ export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) =>
   }
 
   user.money -= +estimatedPrice;
-  user.save();
+  await user.save();
 
   const newBuyOffer = await BuyOffer.save({
     user,
@@ -85,4 +85,30 @@ export const buyOffersToTradeService = async (
 
 export const updateBuyOfferService = async (buyOffer: any) => {
   await BuyOffer.save(buyOffer);
+};
+
+export const removeExpiredBuyOffersService = async (companyId: number) => {
+  const expiredOffers = await BuyOffer.find({
+    where: { actual: true, date_limit: Raw((date) => `${date} < NOW()`), company: { id: companyId } },
+    relations: { user: true },
+  });
+
+  if (expiredOffers.length > 0) {
+    for (let i = 0; i < expiredOffers.length; i++) {
+      const money = +expiredOffers[i].user.money + expiredOffers[i].amount * +expiredOffers[i].max_price;
+      expiredOffers[i].user.money = money;
+      expiredOffers[i].actual = false;
+
+      await expiredOffers[i].user.save();
+      await expiredOffers[i].save();
+    }
+  }
+};
+
+export const isBuyOfferExistService = async (buyOfferId: number): Promise<boolean> => {
+  const offer = await BuyOffer.findOne({
+    where: { id: buyOfferId },
+  });
+
+  return !!offer;
 };

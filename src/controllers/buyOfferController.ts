@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
-import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
+import { BuyOfferRequest } from "../types/request/BuyOfferRequest";
 import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
 import { createBuyOfferService, deleteBuyOfferService, usersBuyOfferService } from "../services/buyOfferService";

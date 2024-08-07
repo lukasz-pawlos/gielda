@@ -1,4 +1,4 @@
-import { StockRateRequest } from "../dto/request/StockRateRequest";
+import { StockRateRequest } from "../types/request/StockRateRequest";
 import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
 import { StockRate } from "../entities/StockRateEntitie";

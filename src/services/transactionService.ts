@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { TransactionD } from "../entities/TransactionEntitie";
-import { TransactionRequest } from "../dto/request/TransactionRequest";
+import { TransactionRequest } from "../types/request/TransactionRequest";
 
 export const allTransactionsService = async (req: Request, res: Response) => {
   const transactions = await TransactionD.find();

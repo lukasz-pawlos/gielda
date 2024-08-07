@@ -11,24 +11,35 @@ import {
   sellOffersToTradeService,
   updateSellOfferService,
 } from "./sellOfferService";
-import { TransactionRequest } from "../dto/request/TransactionRequest";
+import { TransactionRequest } from "../types/request/TransactionRequest";
 import { createTransactionService } from "./transactionService";
-import { BuyOfferRes } from "../dto/response/BuyOfferRes";
-import { SellOfferRes } from "../dto/response/SellOfferRes";
-import { User } from "../entities/UsesEntitie";
+import { BuyOfferRes } from "../types/response/BuyOfferRes";
+import { SellOfferRes } from "../types/response/SellOfferRes";
 import { updateStockRateByCompanyIdService } from "./stockRateService";
 import { updateStockByUserAndCompanyIdService } from "./stockService";
-import { getUserService, updateUserService } from "./userService";
+import { updateUserMoney } from "./userService";
+import { getCache, removeCache, setCache } from "../utils/useCache";
+import dotenv from "dotenv";
 
-let buyOffers: [BuyOfferRes[]] = [[]];
-let sellOffers: [SellOfferRes[]] = [[]];
+const BUY_OFFERS_KEY = "buyOffers";
+const SELL_OFFERS_KEY = "sellOffers";
+const SIZE_COMPANY_CACHE = 100;
+let companysIds: number[] = [];
+
+dotenv.config({ path: `${process.cwd()}/./.env` });
 
 export const trade = async () => {
   console.log("START");
   console.log("Get Companys");
-  const companysIds = await getCompanysIdServices();
+  // const companysIds = await getCompanysIdServices();
   console.log("Get Companys DONE");
-
+  if (process.env.COMPANYS_IDS) {
+    companysIds = process.env.COMPANYS_IDS.split(",").map((id) => Number(id));
+    if (companysIds.some(isNaN)) {
+      console.error("Some COMPANY_ID values are not valid numbers");
+      companysIds = [];
+    }
+  }
   for (const companyId of companysIds) {
     await removeExpiredBuyOffersService(companyId);
     await removeExpiredSellOffersService(companyId);
@@ -37,32 +48,45 @@ export const trade = async () => {
     await updateData(companyId);
     console.log("Get Offers DONE");
 
-    if (!buyOffers[companyId].length || !sellOffers[companyId].length) continue;
+    const buyOffers = getCache<BuyOfferRes>(`${BUY_OFFERS_KEY}-${companyId}`);
+    const sellOffers = getCache<SellOfferRes>(`${SELL_OFFERS_KEY}-${companyId}`);
+
+    if (!buyOffers.length || !sellOffers.length) continue;
 
     console.log("START TREADING");
-    await startTrade(buyOffers[companyId], sellOffers[companyId], companyId);
+    await startTrade(buyOffers, sellOffers, companyId);
 
-    buyOffers[companyId] = clearDoneOffers(buyOffers[companyId]);
-    sellOffers[companyId] = clearDoneOffers(sellOffers[companyId]);
+    clearDoneOffers(buyOffers).forEach((offer) => {
+      setCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`, offer);
+      if (!offer.actual) {
+        removeCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`);
+      }
+    });
+
+    clearDoneOffers(sellOffers).forEach((offer) => {
+      setCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`, offer);
+      if (!offer.actual) {
+        removeCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`);
+      }
+    });
   }
 
   console.log("Trade cycle complete. Scheduling next run.");
   setTimeout(trade, 2 * 1000);
 };
 
-const updateData = async (companyId: number) => {
-  const skipBuyIds: number[] = [];
-  const skipSellIds: number[] = [];
-  if (buyOffers[companyId] === undefined && sellOffers[companyId] === undefined) {
-    buyOffers[companyId] = await buyOffersToTradeService(companyId, skipBuyIds);
-    sellOffers[companyId] = await sellOffersToTradeService(companyId, skipSellIds);
-  } else {
-    const skipBuyIds: number[] = !buyOffers[companyId].length ? [] : buyOffers[companyId].map((offer) => offer.id);
-    const skipSellIds: number[] = !sellOffers[companyId].length ? [] : sellOffers[companyId].map((offer) => offer.id);
+export const updateData = async (companyId: number) => {
+  const buyOffers = getCache<BuyOfferRes>(`${BUY_OFFERS_KEY}-${companyId}`);
+  const sellOffers = getCache<SellOfferRes>(`${SELL_OFFERS_KEY}-${companyId}`);
 
-    buyOffers[companyId] = buyOffers[companyId].concat(await buyOffersToTradeService(companyId, skipBuyIds));
-    sellOffers[companyId] = sellOffers[companyId].concat(await sellOffersToTradeService(companyId, skipSellIds));
-  }
+  const skipBuyIds = buyOffers.map((offer) => offer.id);
+  const skipSellIds = sellOffers.map((offer) => offer.id);
+
+  const newBuyOffers = await buyOffersToTradeService(companyId, skipBuyIds, SIZE_COMPANY_CACHE - skipBuyIds.length);
+  const newSellOffers = await sellOffersToTradeService(companyId, skipSellIds, SIZE_COMPANY_CACHE - skipSellIds.length);
+
+  newBuyOffers.forEach((offer) => setCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
+  newSellOffers.forEach((offer) => setCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
 };
 
 const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], companyId: number) => {
@@ -82,9 +106,6 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       if (!(await isSellOfferExistService(sellOffers[j].id))) sellOffers.splice(j, 1);
 
       const price = parseFloat(((+buyOffers[i].max_price + +sellOffers[j].min_price) / 2).toFixed(2));
-
-      let buyer = await getUserService(buyOffers[i].userId);
-      let seller = await getUserService(sellOffers[i].userId);
 
       const newTransaction: TransactionRequest = {
         sellOffer: sellOffers[j],
@@ -113,10 +134,8 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       await updateSellOfferService(sellOffers[j]);
       console.log("Update offer DONE");
 
-      ({ buyer, seller } = manageMoney(buyOffers[i], amount, price, buyer, seller));
       console.log("Update User");
-      await updateUserService(buyer);
-      await updateUserService(seller);
+      await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[i].userId);
       console.log("Update User DONE");
 
       console.log("Update Stock");
@@ -133,16 +152,15 @@ const clearDoneOffers = <T extends { actual: boolean }>(offers: T[]): T[] => {
   return offers.filter((offer) => offer.actual !== false);
 };
 
-const manageMoney = (buyOffer: BuyOfferRes, amount: number, price: number, buyer: User, seller: User) => {
+const manageMoney = async (buyOffer: BuyOfferRes, amount: number, price: number, bayerId: number, sellerId: number) => {
   const amountN = Number(amount);
   const maxPrice = Number(buyOffer.max_price);
   const priceN = Number(price);
-  const buyerMoney = Number(buyer.money);
-  const sellerMoney = Number(seller.money);
 
   const buyerCost = amountN * maxPrice;
-  buyer.money = buyerMoney + buyerCost - amountN * priceN;
-  seller.money = sellerMoney + amountN * priceN;
+  const buyerMoney = buyerCost - amountN * priceN;
+  const sellerMoney = amountN * priceN;
 
-  return { buyer, seller };
+  await updateUserMoney(bayerId, buyerMoney);
+  await updateUserMoney(sellerId, sellerMoney);
 };

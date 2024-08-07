@@ -1,6 +1,7 @@
 import { User } from "../entities/UsesEntitie";
 import { AppError } from "../utils/appError";
-import { UserRequest } from "../dto/request/userRequest";
+import { AppDataSource } from "../database/dataSource";
+import { UserRequest } from "../types/request/UserRequest";
 
 export const createUserService = async (newUserData: UserRequest) => {
   const { name, surname, username, password, email } = newUserData;
@@ -43,4 +44,20 @@ export const deleteUserService = async (userId: number) => {
 
 export const updateUserService = async (user: User) => {
   await User.save(user);
+};
+
+export const updateUserMoney = async (userId: number, deltaMoney: number) => {
+  const entityManager = AppDataSource.manager;
+
+  await entityManager.transaction(async (transactionalEntityManager) => {
+    const user = await transactionalEntityManager.findOne(User, {
+      where: { id: userId },
+      lock: { mode: "pessimistic_write" },
+    });
+
+    if (user) {
+      user.money += +deltaMoney;
+      await transactionalEntityManager.save(user);
+    }
+  });
 };

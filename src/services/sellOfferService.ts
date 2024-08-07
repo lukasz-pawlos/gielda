@@ -1,10 +1,10 @@
-import { SellOfferRequest } from "../dto/request/SellOfferRequest";
+import { SellOfferRequest } from "../types/request/SellOfferRequest";
 import { User } from "../entities/UsesEntitie";
 import { Stock } from "../entities/StockEntities";
 import { AppError } from "../utils/appError";
 import { SellOffer } from "../entities/SellOfferEntitie";
 import { In, Not, Raw } from "typeorm";
-import { SellOfferRes } from "../dto/response/SellOfferRes";
+import { SellOfferRes } from "../types/response/SellOfferRes";
 
 export const createSellOfferService = async (newSellOfferData: SellOfferRequest) => {
   const { companyId, userId, min_price, amount, date_limit } = newSellOfferData;
@@ -94,11 +94,9 @@ export const removeExpiredSellOffersService = async (companyId: number) => {
 
   if (expiredOffers.length > 0) {
     for (let i = 0; i < expiredOffers.length; i++) {
-      console.log(expiredOffers[i].stock.amount);
-      console.log(expiredOffers[i].amount);
       expiredOffers[i].stock.amount += expiredOffers[i].amount;
       expiredOffers[i].actual = false;
-      console.log(expiredOffers[i].stock.amount);
+
       await expiredOffers[i].stock.save();
       await expiredOffers[i].save();
     }

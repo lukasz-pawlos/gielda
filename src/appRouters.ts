@@ -1,5 +1,5 @@
 import { companyRouter } from "./routes/companyRouter";
-import { stockRateRouter } from "./routes/StockRateRouter";
+import { stockRateRouter } from "./routes/stockRateRouter";
 import { stockRouter } from "./routes/stockRouter";
 import { userRouter } from "./routes/userRouter";
 import { buyOfferRouter } from "./routes/buyOfferRouter";

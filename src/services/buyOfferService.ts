@@ -1,9 +1,9 @@
 import { User } from "../entities/UsesEntitie";
 import { AppError } from "../utils/appError";
-import { BuyOfferRequest } from "../dto/request/BuyOfferRequest";
+import { BuyOfferRequest } from "../types/request/BuyOfferRequest";
 import { Company } from "../entities/CompanyEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
-import { BuyOfferRes } from "../dto/response/BuyOfferRes";
+import { BuyOfferRes } from "../types/response/BuyOfferRes";
 import { In, Not, Raw } from "typeorm";
 import { updateUserService } from "./userService";
 
@@ -72,7 +72,7 @@ export const buyOffersToTradeService = async (
 ): Promise<BuyOfferRes[]> => {
   const buyOffers = await BuyOffer.find({
     where: { actual: true, company: { id: companyId }, id: Not(In(skipIds)) },
-    order: { id: "ASC", max_price: "ASC" },
+    order: { id: "ASC", max_price: "DESC" },
     take: recordsNumber,
   });
 

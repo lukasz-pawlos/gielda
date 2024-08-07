@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { createStockService, getStockByUserIdService, getStockService } from "../services/stockService";
-import { StockRequest } from "../dto/request/StockRequest";
+import { StockRequest } from "../types/request/StockRequest";
 import { catchAsync } from "../utils/catchAsync";
 
 export const createStock = catchAsync(

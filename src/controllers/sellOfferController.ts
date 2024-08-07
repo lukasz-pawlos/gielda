@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
-import { SellOfferRequest } from "../dto/request/SellOfferRequest";
+import { SellOfferRequest } from "../types/request/SellOfferRequest";
 import { createSellOfferService, deleteSellOfferService, usersSellOfferService } from "../services/sellOfferService";
 import { catchAsync } from "../utils/catchAsync";
 

@@ -7,7 +7,7 @@ import {
   findAllCompaniesService,
   getCompanyService,
 } from "../services/companyService";
-import { CompanyRequest } from "../dto/request/CompanyRequest";
+import { CompanyRequest } from "../types/request/CompanyRequest";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { catchAsync } from "../utils/catchAsync";
 

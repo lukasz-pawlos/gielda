@@ -2,7 +2,7 @@ import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { NextFunction, Request, Response } from "express";
-import { StockRateRequest } from "../dto/request/StockRateRequest";
+import { StockRateRequest } from "../types/request/StockRateRequest";
 import { createStockRateService, allActualStockRatesService } from "../services/stockRateService";
 import { catchAsync } from "../utils/catchAsync";
 

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { createUserService, deleteUserService, findAllUsersService, getUserService } from "../services/userService";
 import { validationResult } from "express-validator";
 import { AppError } from "../utils/appError";
-import { UserRequest } from "../dto/request/userRequest";
+import { UserRequest } from "../types/request/UserRequest";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { catchAsync } from "../utils/catchAsync";
 

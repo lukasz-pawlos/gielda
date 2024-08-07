@@ -1,4 +1,4 @@
-import { CompanyRequest } from "../dto/request/CompanyRequest";
+import { CompanyRequest } from "../types/request/CompanyRequest";
 import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
 

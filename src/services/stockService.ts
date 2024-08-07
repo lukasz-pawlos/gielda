@@ -1,4 +1,4 @@
-import { StockRequest } from "../dto/request/StockRequest";
+import { StockRequest } from "../types/request/StockRequest";
 import { Stock } from "../entities/StockEntities";
 import { User } from "../entities/UsesEntitie";
 import { Company } from "../entities/CompanyEntities";

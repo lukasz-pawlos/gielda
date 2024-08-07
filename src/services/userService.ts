@@ -56,7 +56,9 @@ export const updateUserMoney = async (userId: number, deltaMoney: number) => {
     });
 
     if (user) {
-      user.money += +deltaMoney;
+      const newValue = Number(user.money) + Number(deltaMoney);
+      console.log("money + deltaMoney = " + newValue);
+      user.money = newValue;
       await transactionalEntityManager.save(user);
     }
   });

@@ -14,13 +14,21 @@ export const createStockService = async (newStockData: StockRequest) => {
     throw new AppError("User or Company not found", 404);
   }
 
-  const newStock = Stock.save({
-    user,
-    company,
-    amount,
-  });
+  const stock = await Stock.findOne({ where: { user: { id: userId }, company: { id: companyId } } });
 
-  return newStock;
+  if (!stock) {
+    const newStock = Stock.save({
+      user,
+      company,
+      amount,
+    });
+
+    return newStock;
+  }
+  stock.amount = Number(stock.amount) + Number(amount);
+
+  stock.save();
+  return stock;
 };
 
 export const getStockService = async (stockId: number) => {

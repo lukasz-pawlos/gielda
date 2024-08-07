@@ -24,27 +24,27 @@ import dotenv from "dotenv";
 const BUY_OFFERS_KEY = "buyOffers";
 const SELL_OFFERS_KEY = "sellOffers";
 const SIZE_COMPANY_CACHE = 100;
-let companysIds: number[] = [];
+let companiesIds: number[] = [];
 
 dotenv.config({ path: `${process.cwd()}/./.env` });
 
 export const trade = async () => {
   console.log("START");
-  console.log("Get Companys");
-  // const companysIds = await getCompanysIdServices();
-  console.log("Get Companys DONE");
-  if (process.env.COMPANYS_IDS) {
-    companysIds = process.env.COMPANYS_IDS.split(",").map((id) => Number(id));
-    if (companysIds.some(isNaN)) {
+  console.log("Get Companies");
+  if (process.env.COMPANIES_IDS) {
+    companiesIds = process.env.COMPANIES_IDS.split(",").map((id) => Number(id));
+    if (companiesIds.some(isNaN)) {
       console.error("Some COMPANY_ID values are not valid numbers");
-      companysIds = [];
+      companiesIds = [];
     }
   }
-  for (const companyId of companysIds) {
+  console.log("Get Companies DONE");
+
+  for (const companyId of companiesIds) {
     await removeExpiredBuyOffersService(companyId);
     await removeExpiredSellOffersService(companyId);
 
-    console.log("Get Offers");
+    console.log(`Get Offers ID: ${companyId}`);
     await updateData(companyId);
     console.log("Get Offers DONE");
 
@@ -55,20 +55,6 @@ export const trade = async () => {
 
     console.log("START TREADING");
     await startTrade(buyOffers, sellOffers, companyId);
-
-    clearDoneOffers(buyOffers).forEach((offer) => {
-      setCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`, offer);
-      if (!offer.actual) {
-        removeCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`);
-      }
-    });
-
-    clearDoneOffers(sellOffers).forEach((offer) => {
-      setCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`, offer);
-      if (!offer.actual) {
-        removeCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`);
-      }
-    });
   }
 
   console.log("Trade cycle complete. Scheduling next run.");
@@ -119,11 +105,14 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       await createTransactionService(newTransaction);
       console.log("Create Transactions DONE");
 
-      buyOffers[i].amount -= amount;
-      sellOffers[j].amount -= amount;
+      buyOffers[i].amount = Number(buyOffers[i].amount) - Number(amount);
+      sellOffers[j].amount = Number(sellOffers[j].amount) - Number(amount);
 
       buyOffers[i].actual = buyOffers[i].amount !== 0;
       sellOffers[j].actual = sellOffers[j].amount !== 0;
+
+      setCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`, buyOffers[i]);
+      setCache(`${SELL_OFFERS_KEY}-${companyId}-${sellOffers[j].id}`, sellOffers[j]);
 
       console.log("Update StockRate");
       await updateStockRateByCompanyIdService({ companyId, rate: price });
@@ -142,8 +131,14 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       await updateStockByUserAndCompanyIdService(buyOffers[i].userId, companyId, amount);
       console.log("Update Stock DONE");
 
-      if (buyOffers[i].amount === 0) i++;
-      if (sellOffers[j].amount === 0) j++;
+      if (buyOffers[i].amount === 0) {
+        removeCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`);
+        i++;
+      }
+      if (sellOffers[j].amount === 0) {
+        removeCache(`${SELL_OFFERS_KEY}-${companyId}-${buyOffers[j].id}`);
+        j++;
+      }
     }
   }
 };

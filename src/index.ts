@@ -4,6 +4,7 @@ import "./database/dataSource";
 import { AppDataSource } from "./database/dataSource";
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { APPROUTER } from "./appRouters";
+import { createStockLog } from "./utils/logger/createlog";
 
 const app = express();
 app.use(express.json());
@@ -19,5 +20,6 @@ AppDataSource.initialize()
     app.listen(PORT, () => {
       console.log("Server is running on http://localhost:" + PORT);
     });
+    setInterval(await createStockLog, 1000);
   })
   .catch((error) => console.log(error));

@@ -3,18 +3,23 @@ import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
 
 export const findAllCompaniesService = async () => {
+  const start = new Date();
   const company = await Company.find();
-  return company;
+  const end = new Date();
+
+  return { result: company, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const getCompanyService = async (companyId: number) => {
+  const start = new Date();
   const company = await Company.findOne({ where: { id: companyId } });
 
   if (!company) {
     throw new AppError("Company not found", 404);
   }
+  const end = new Date();
 
-  return company;
+  return { result: company, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const getCompanysIdServices = async () => {
@@ -28,18 +33,24 @@ export const getCompanysIdServices = async () => {
 };
 
 export const createCompanyService = async (newComapnyData: CompanyRequest) => {
+  const start = new Date();
   const { name } = newComapnyData;
 
   const newCompany = await Company.save({ name });
+  const end = new Date();
 
-  return newCompany;
+  return { result: newCompany, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const deleteCompanyService = async (companyId: number) => {
+  const start = new Date();
   const company = await Company.findOne({ where: { id: companyId } });
   if (!company) {
     throw new AppError("Company not found", 404);
   }
 
   await Company.delete({ id: companyId });
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };

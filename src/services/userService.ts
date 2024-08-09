@@ -6,6 +6,7 @@ import { UserRequest } from "../types/request/UserRequest";
 export const createUserService = async (newUserData: UserRequest) => {
   const { name, surname, username, password, email } = newUserData;
 
+  const start = new Date();
   const newUser = await User.save({
     name,
     surname,
@@ -14,32 +15,41 @@ export const createUserService = async (newUserData: UserRequest) => {
     email,
     money: 0,
   });
+  const end = new Date();
 
-  return newUser;
+  return { result: newUser, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const getUserService = async (userId: number) => {
+  const start = new Date();
   const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
     throw new AppError("User not found", 404);
   }
+  const end = new Date();
 
-  return user;
+  return { result: user, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const findAllUsersService = async () => {
+  const start = new Date();
   const users = await User.find();
-  return users;
+  const end = new Date();
+
+  return { result: users, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const deleteUserService = async (userId: number) => {
+  const start = new Date();
   const user = await User.findOne({ where: { id: userId } });
   if (!user) {
     throw new AppError("User not found", 404);
   }
 
   await User.delete({ id: userId });
+  const end = new Date();
+  return end.getTime() - start.getTime();
 };
 
 export const updateUserService = async (user: User) => {
@@ -47,6 +57,7 @@ export const updateUserService = async (user: User) => {
 };
 
 export const updateUserMoney = async (userId: number, deltaMoney: number) => {
+  const start = new Date();
   const entityManager = AppDataSource.manager;
 
   await entityManager.transaction(async (transactionalEntityManager) => {
@@ -62,4 +73,6 @@ export const updateUserMoney = async (userId: number, deltaMoney: number) => {
       await transactionalEntityManager.save(user);
     }
   });
+  const end = new Date();
+  return end.getTime() - start.getTime();
 };

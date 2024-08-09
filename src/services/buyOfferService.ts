@@ -8,6 +8,7 @@ import { In, Not, Raw } from "typeorm";
 import { updateUserService } from "./userService";
 
 export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) => {
+  const start = new Date();
   const { companyId, userId, max_price, amount, date_limit } = newBuyOfferData;
 
   const user = await User.findOne({ where: { id: userId } });
@@ -37,11 +38,13 @@ export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) =>
   });
 
   await updateUserService(user);
+  const end = new Date();
 
-  return newBuyOffer;
+  return { result: newBuyOffer, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const deleteBuyOfferService = async (buyOfferId: number) => {
+  const start = new Date();
   const buyOffer = await BuyOffer.findOne({ where: { id: buyOfferId }, relations: { user: true } });
   if (!buyOffer) {
     throw new AppError("Delete offer not found", 404);
@@ -51,9 +54,13 @@ export const deleteBuyOfferService = async (buyOfferId: number) => {
 
   await BuyOffer.delete({ id: buyOfferId });
   await updateUserService(buyOffer.user);
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };
 
 export const usersBuyOfferService = async (userId: number) => {
+  const start = new Date();
   const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
@@ -61,8 +68,9 @@ export const usersBuyOfferService = async (userId: number) => {
   }
 
   const buyOffers = await BuyOffer.find({ where: { user } });
+  const end = new Date();
 
-  return buyOffers;
+  return { result: buyOffers, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const buyOffersToTradeService = async (

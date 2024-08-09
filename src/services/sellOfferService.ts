@@ -7,6 +7,7 @@ import { In, Not, Raw } from "typeorm";
 import { SellOfferRes } from "../types/response/SellOfferRes";
 
 export const createSellOfferService = async (newSellOfferData: SellOfferRequest) => {
+  const start = new Date();
   const { companyId, userId, min_price, amount, date_limit } = newSellOfferData;
 
   const user = await User.findOne({ where: { id: userId } });
@@ -33,11 +34,13 @@ export const createSellOfferService = async (newSellOfferData: SellOfferRequest)
     actual: true,
     date_limit,
   });
+  const end = new Date();
 
-  return newSellOffer;
+  return { result: newSellOffer, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const deleteSellOfferService = async (sellOfferId: number) => {
+  const start = new Date();
   const sellOffer = await SellOffer.findOne({ where: { id: sellOfferId }, relations: { stock: true } });
   if (!sellOffer) {
     throw new AppError("Buy offer not found", 404);
@@ -46,9 +49,14 @@ export const deleteSellOfferService = async (sellOfferId: number) => {
   sellOffer.stock.amount += sellOffer.amount;
 
   await SellOffer.delete({ id: sellOfferId });
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };
 
 export const usersSellOfferService = async (userId: number) => {
+  const start = new Date();
+
   const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
@@ -56,8 +64,9 @@ export const usersSellOfferService = async (userId: number) => {
   }
 
   const sellOffers = await SellOffer.find({ where: { user } });
+  const end = new Date();
 
-  return sellOffers;
+  return { result: sellOffers, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const sellOffersToTradeService = async (

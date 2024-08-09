@@ -4,12 +4,15 @@ import { AppError } from "../utils/appError";
 import { StockRate } from "../entities/StockRateEntitie";
 
 export const allActualStockRatesService = async () => {
+  const start = new Date();
   const stockRates = await StockRate.find({ where: { actual: true } });
+  const end = new Date();
 
-  return stockRates;
+  return { result: stockRates, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const createStockRateService = async (newStockRateDate: StockRateRequest) => {
+  const start = new Date();
   const { companyId, rate } = newStockRateDate;
 
   const company = await Company.findOne({ where: { id: companyId } });
@@ -18,14 +21,15 @@ export const createStockRateService = async (newStockRateDate: StockRateRequest)
     throw new AppError("Company not found", 404);
   }
 
-  const newStockRate = StockRate.create({
+  const newStockRate = StockRate.save({
     company,
     date_inc: new Date().toJSON(),
     actual: true,
     rate,
   });
+  const end = new Date();
 
-  return newStockRate.save();
+  return { result: newStockRate, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const updateStockRateByCompanyIdService = async (stockRateDate: StockRateRequest) => {

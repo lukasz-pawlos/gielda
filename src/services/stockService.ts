@@ -5,6 +5,7 @@ import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
 
 export const createStockService = async (newStockData: StockRequest) => {
+  const start = new Date();
   const { companyId, userId, amount } = newStockData;
 
   const user = await User.findOne({ where: { id: userId } });
@@ -22,13 +23,16 @@ export const createStockService = async (newStockData: StockRequest) => {
       company,
       amount,
     });
+    const end = new Date();
 
-    return newStock;
+    return { result: newStock, databaseTime: end.getTime() - start.getTime() };
   }
   stock.amount = Number(stock.amount) + Number(amount);
 
   stock.save();
-  return stock;
+  const end = new Date();
+
+  return { result: stock, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const getStockService = async (stockId: number) => {
@@ -41,6 +45,7 @@ export const getStockService = async (stockId: number) => {
 };
 
 export const getStockByUserIdService = async (userId: number) => {
+  const start = new Date();
   const user = await User.findOne({ where: { id: userId } });
 
   if (!user) {
@@ -52,8 +57,9 @@ export const getStockByUserIdService = async (userId: number) => {
   if (!stock) {
     throw new AppError("Stock not found", 404);
   }
+  const end = new Date();
 
-  return { stock, user };
+  return { result: stock, databaseTime: end.getTime() - start.getTime() };
 };
 
 export const updateStockByUserAndCompanyIdService = async (userId: number, companyId: number, amount: number) => {

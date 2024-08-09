@@ -6,3 +6,5 @@ export const stockRateRouter = Router();
 
 stockRateRouter.post("/create", createStockRateValidation, createStockRate);
 stockRateRouter.get("/all", allActualStockRates);
+// TO DO
+// stockRateRouter.get("/:id", allActualStockRates);

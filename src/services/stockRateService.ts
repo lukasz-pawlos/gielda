@@ -11,6 +11,14 @@ export const allActualStockRatesService = async () => {
   return { result: stockRates, databaseTime: end.getTime() - start.getTime() };
 };
 
+export const allActualCompanyStockRateService = async (companyId: number) => {
+  const start = new Date();
+  const stockRate = await StockRate.findOne({ where: { actual: true, company: { id: companyId } } });
+  const end = new Date();
+
+  return { result: stockRate, databaseTime: end.getTime() - start.getTime() };
+};
+
 export const createStockRateService = async (newStockRateDate: StockRateRequest) => {
   const start = new Date();
   const { companyId, rate } = newStockRateDate;

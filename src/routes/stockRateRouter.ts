@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { createStockRateValidation } from "../validations/stockRateValidation";
-import { createStockRate, allActualStockRates } from "../controllers/stockRateController";
+import { createStockRate, allActualStockRates, allActualCompanyStockRate } from "../controllers/stockRateController";
 
 export const stockRateRouter = Router();
 
 stockRateRouter.post("/create", createStockRateValidation, createStockRate);
 stockRateRouter.get("/all", allActualStockRates);
-// TO DO
-// stockRateRouter.get("/:id", allActualStockRates);
+stockRateRouter.get("/company/:id", allActualCompanyStockRate);

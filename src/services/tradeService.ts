@@ -20,17 +20,16 @@ import { updateStockByUserAndCompanyIdService } from "./stockService";
 import { updateUserMoney } from "./userService";
 import { getCache, removeCache, setCache } from "../utils/useCache";
 import dotenv from "dotenv";
-
-const BUY_OFFERS_KEY = "buyOffers";
-const SELL_OFFERS_KEY = "sellOffers";
-const SIZE_COMPANY_CACHE = 100;
-let companiesIds: number[] = [];
+import { createLog, TradeLog } from "../utils/logger/createlog";
 
 dotenv.config({ path: `${process.cwd()}/./.env` });
 
+const BUY_OFFERS_KEY = "buyOffers";
+const SELL_OFFERS_KEY = "sellOffers";
+const SIZE_COMPANY_CACHE = Number(process.env.CASHE_TIME);
+let companiesIds: number[] = [];
+
 export const trade = async () => {
-  console.log("START");
-  console.log("Get Companies");
   if (process.env.COMPANIES_IDS) {
     companiesIds = process.env.COMPANIES_IDS.split(",").map((id) => Number(id));
     if (companiesIds.some(isNaN)) {
@@ -38,26 +37,21 @@ export const trade = async () => {
       companiesIds = [];
     }
   }
-  console.log("Get Companies DONE");
 
   for (const companyId of companiesIds) {
     await removeExpiredBuyOffersService(companyId);
     await removeExpiredSellOffersService(companyId);
 
-    console.log(`Get Offers ID: ${companyId}`);
     await updateData(companyId);
-    console.log("Get Offers DONE");
 
     const buyOffers = getCache<BuyOfferRes>(`${BUY_OFFERS_KEY}-${companyId}`);
     const sellOffers = getCache<SellOfferRes>(`${SELL_OFFERS_KEY}-${companyId}`);
 
     if (!buyOffers.length || !sellOffers.length) continue;
 
-    console.log("START TREADING");
     await startTrade(buyOffers, sellOffers, companyId);
   }
 
-  console.log("Trade cycle complete. Scheduling next run.");
   setTimeout(trade, 2 * 1000);
 };
 
@@ -82,6 +76,8 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
     if (+buyOffers[i].max_price < +sellOffers[j].min_price || buyOffers[i].userId === sellOffers[j].userId) {
       j++;
     } else {
+      const start = new Date();
+
       const amount = Math.min(buyOffers[i].amount, sellOffers[j].amount);
       if (amount === 0) {
         if (buyOffers[i].amount === 0) i++;
@@ -101,9 +97,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
         transactionData: new Date(),
       };
 
-      console.log("Create Transactions");
       await createTransactionService(newTransaction);
-      console.log("Create Transactions DONE");
 
       buyOffers[i].amount = Number(buyOffers[i].amount) - Number(amount);
       sellOffers[j].amount = Number(sellOffers[j].amount) - Number(amount);
@@ -114,22 +108,14 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       setCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`, buyOffers[i]);
       setCache(`${SELL_OFFERS_KEY}-${companyId}-${sellOffers[j].id}`, sellOffers[j]);
 
-      console.log("Update StockRate");
       await updateStockRateByCompanyIdService({ companyId, rate: price });
-      console.log("Update StockRate DONE");
 
-      console.log("Update offer");
       await updateBuyOfferService(buyOffers[i]);
       await updateSellOfferService(sellOffers[j]);
-      console.log("Update offer DONE");
 
-      console.log("Update User");
       await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[i].userId);
-      console.log("Update User DONE");
 
-      console.log("Update Stock");
       await updateStockByUserAndCompanyIdService(buyOffers[i].userId, companyId, amount);
-      console.log("Update Stock DONE");
 
       if (buyOffers[i].amount === 0) {
         removeCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`);
@@ -139,6 +125,16 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
         removeCache(`${SELL_OFFERS_KEY}-${companyId}-${buyOffers[j].id}`);
         j++;
       }
+
+      const end = new Date();
+
+      // const message:TradeLog = {
+      //   applicationTime: 8,
+      //   databaseTime: 8,
+      //   numberOfSellOffers: 8,
+      //   numberOfBuyOffers: 8,
+      // }
+      // await createLog();
     }
   }
 };

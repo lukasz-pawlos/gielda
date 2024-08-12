@@ -1,7 +1,9 @@
 import NodeCache from "node-cache";
+import dotenv from "dotenv";
 
-// Ustalanie globalnego TTL na 60 sekund (możesz zmienić według potrzeb)
-const cache = new NodeCache({ stdTTL: 60 });
+dotenv.config({ path: `${process.cwd()}/./.env` });
+
+const cache = new NodeCache({ stdTTL: Number(process.env.CASHE_TIME) });
 
 export const getCache = <T>(prefix: string): T[] => {
   const keys = cache.keys().filter((key) => key.startsWith(prefix));

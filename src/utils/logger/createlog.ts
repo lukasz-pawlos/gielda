@@ -14,6 +14,10 @@ export interface APILog {
   endpointUrl: string;
 }
 
+export interface TradeCpuLog extends StockLog {
+  replicaId: number;
+}
+
 export interface TradeLog {
   applicationTime: number;
   databaseTime: number;
@@ -25,7 +29,7 @@ export const createLog = async (info: APILog | TradeLog, path: string) => {
   log("info", info, `logs/${path}`);
 };
 
-export const createStockLog = async () => {
+const cpuMemoryUse = async () => {
   const cpuLoad = await si.currentLoad();
   const memory = await si.mem();
 
@@ -37,5 +41,17 @@ export const createStockLog = async () => {
     memoryUsage,
   };
 
+  return message;
+};
+
+export const createStockLog = async () => {
+  const message = await cpuMemoryUse();
   log("info", message, "logs/stockUse.csv");
+};
+
+export const createTradeCpuLog = async (replicaId: number) => {
+  const cpuMemory = await cpuMemoryUse();
+  const message: TradeCpuLog = { ...cpuMemory, replicaId };
+
+  log("info", message, `logs/tradeCpu${replicaId}.csv`);
 };

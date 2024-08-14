@@ -92,7 +92,11 @@ export const sellOffersToTradeService = async (
 };
 
 export const updateSellOfferService = async (sellOffer: any) => {
+  const start = new Date();
   await SellOffer.save(sellOffer);
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };
 
 export const removeExpiredSellOffersService = async (companyId: number) => {

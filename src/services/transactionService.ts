@@ -8,6 +8,10 @@ export const allTransactionsService = async (req: Request, res: Response) => {
 };
 
 export const createTransactionService = async (req: TransactionRequest) => {
+  const start = new Date();
   const { sellOffer, buyOffer, amount, price, transactionData } = req;
   TransactionD.save({ sellOffer, buyOffer, amount, price, transactionData });
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };

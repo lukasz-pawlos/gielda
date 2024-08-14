@@ -97,7 +97,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
         transactionData: new Date(),
       };
 
-      await createTransactionService(newTransaction);
+      const tradeTime = await createTransactionService(newTransaction);
 
       buyOffers[i].amount = Number(buyOffers[i].amount) - Number(amount);
       sellOffers[j].amount = Number(sellOffers[j].amount) - Number(amount);
@@ -108,14 +108,14 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       setCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`, buyOffers[i]);
       setCache(`${SELL_OFFERS_KEY}-${companyId}-${sellOffers[j].id}`, sellOffers[j]);
 
-      await updateStockRateByCompanyIdService({ companyId, rate: price });
+      const updateStockRateTime = await updateStockRateByCompanyIdService({ companyId, rate: price });
 
-      await updateBuyOfferService(buyOffers[i]);
-      await updateSellOfferService(sellOffers[j]);
+      const updateBuyOfferTime = await updateBuyOfferService(buyOffers[i]);
+      const updateSellOfferTime = await updateSellOfferService(sellOffers[j]);
 
-      await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[i].userId);
+      const updateMoneyTime = await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[i].userId);
 
-      await updateStockByUserAndCompanyIdService(buyOffers[i].userId, companyId, amount);
+      const updateStockTime = await updateStockByUserAndCompanyIdService(buyOffers[i].userId, companyId, amount);
 
       if (buyOffers[i].amount === 0) {
         removeCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`);
@@ -128,13 +128,19 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
 
       const end = new Date();
 
-      // const message:TradeLog = {
-      //   applicationTime: 8,
-      //   databaseTime: 8,
-      //   numberOfSellOffers: 8,
-      //   numberOfBuyOffers: 8,
-      // }
-      // await createLog();
+      const message: TradeLog = {
+        applicationTime: end.getTime() - start.getTime(),
+        databaseTime:
+          tradeTime +
+          updateStockRateTime +
+          updateBuyOfferTime +
+          updateSellOfferTime +
+          updateMoneyTime +
+          updateStockTime,
+        numberOfSellOffers: amount,
+        numberOfBuyOffers: amount,
+      };
+      await createLog(message, "useTrade.csv");
     }
   }
 };
@@ -152,6 +158,8 @@ const manageMoney = async (buyOffer: BuyOfferRes, amount: number, price: number,
   const buyerMoney = buyerCost - amountN * priceN;
   const sellerMoney = amountN * priceN;
 
-  await updateUserMoney(bayerId, buyerMoney);
-  await updateUserMoney(sellerId, sellerMoney);
+  const updateBuyerMoneyTime = await updateUserMoney(bayerId, buyerMoney);
+  const updateSellerMoneyTime = await updateUserMoney(sellerId, sellerMoney);
+
+  return updateBuyerMoneyTime + updateSellerMoneyTime;
 };

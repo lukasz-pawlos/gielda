@@ -41,6 +41,8 @@ export const createStockRateService = async (newStockRateDate: StockRateRequest)
 };
 
 export const updateStockRateByCompanyIdService = async (stockRateDate: StockRateRequest) => {
+  const start = new Date();
+
   const { companyId, rate } = stockRateDate;
 
   const company = await Company.findOne({ where: { id: companyId } });
@@ -51,12 +53,13 @@ export const updateStockRateByCompanyIdService = async (stockRateDate: StockRate
 
   await StockRate.update({ company, actual: true }, { actual: false });
 
-  const newStockRate = StockRate.create({
+  const newStockRate = StockRate.save({
     company,
     date_inc: new Date().toISOString(),
     actual: true,
     rate,
   });
+  const end = new Date();
 
-  return newStockRate.save();
+  return end.getTime() - start.getTime();
 };

@@ -92,7 +92,11 @@ export const buyOffersToTradeService = async (
 };
 
 export const updateBuyOfferService = async (buyOffer: any) => {
+  const start = new Date();
   await BuyOffer.save(buyOffer);
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };
 
 export const removeExpiredBuyOffersService = async (companyId: number) => {

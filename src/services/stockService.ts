@@ -63,6 +63,7 @@ export const getStockByUserIdService = async (userId: number) => {
 };
 
 export const updateStockByUserAndCompanyIdService = async (userId: number, companyId: number, amount: number) => {
+  const start = new Date();
   const stock = await Stock.findOne({
     where: { company: { id: companyId }, user: { id: userId } },
     relations: { user: true, company: true },
@@ -70,8 +71,13 @@ export const updateStockByUserAndCompanyIdService = async (userId: number, compa
 
   if (!stock) {
     await createStockService({ companyId, userId, amount });
-    return;
+    const end = new Date();
+
+    return end.getTime() - start.getTime();
   }
   stock.amount = +stock.amount + amount;
   await stock.save();
+  const end = new Date();
+
+  return end.getTime() - start.getTime();
 };

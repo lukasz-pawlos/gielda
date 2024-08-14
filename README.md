@@ -16,7 +16,7 @@ DB_PORT =
 ### Using Docker
 
 ```
-$ docker-compose up --build
+$ ./start_docker.sh <number_of_containers> <number_of_companies_per_container> <number_of_cache_elem_per_company> <cashe_time_in_sec>
 ```
 
  ### Local using

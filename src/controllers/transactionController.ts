@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { allTransactionsService } from "../services/transactionService";
 
 export const allTransactions = async (req: Request, res: Response) => {

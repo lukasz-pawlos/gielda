@@ -20,6 +20,6 @@ AppDataSource.initialize()
     app.listen(PORT, () => {
       console.log("Server is running on http://localhost:" + PORT);
     });
-    setInterval(await createStockLog, 1000);
+    setInterval(await createStockLog, 5000);
   })
   .catch((error) => console.log(error));

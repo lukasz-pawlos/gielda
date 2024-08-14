@@ -6,7 +6,7 @@ import { StockRateRequest } from "../types/request/StockRateRequest";
 import {
   createStockRateService,
   allActualStockRatesService,
-  allActualCompanyStockRateService,
+  actualCompanyStockRateService,
 } from "../services/stockRateService";
 import { catchAsync } from "../utils/catchAsync";
 import { APILog, createLog } from "../utils/logger/createlog";
@@ -29,13 +29,13 @@ export const allActualStockRates = catchAsync(async (req: Request, res: Response
   createLog(ApiLog, "apiUse.csv");
 });
 
-export const allActualCompanyStockRate = catchAsync(async (req: Request, res: Response) => {
+export const actualCompanyStockRate = catchAsync(async (req: Request, res: Response) => {
   const start = new Date();
   const companyId: any = req.params.id;
-  const { result, databaseTime } = await allActualCompanyStockRateService(companyId);
+  const { result, databaseTime } = await actualCompanyStockRateService(companyId);
   const end = new Date();
 
-  res.json({ result });
+  res.json(result);
 
   const ApiLog: APILog = {
     apiMethod: "GET",

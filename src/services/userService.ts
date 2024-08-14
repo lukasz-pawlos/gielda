@@ -68,8 +68,7 @@ export const updateUserMoney = async (userId: number, deltaMoney: number) => {
 
     if (user) {
       const newValue = Number(user.money) + Number(deltaMoney);
-      console.log("money + deltaMoney = " + newValue);
-      user.money = newValue;
+      user.money = Number(newValue.toFixed(2));
       await transactionalEntityManager.save(user);
     }
   });

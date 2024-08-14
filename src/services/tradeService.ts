@@ -52,7 +52,7 @@ export const trade = async () => {
     await startTrade(buyOffers, sellOffers, companyId);
   }
 
-  setTimeout(trade, 2 * 1000);
+  setTimeout(trade, 500);
 };
 
 export const updateData = async (companyId: number) => {
@@ -62,11 +62,19 @@ export const updateData = async (companyId: number) => {
   const skipBuyIds = buyOffers.map((offer) => offer.id);
   const skipSellIds = sellOffers.map((offer) => offer.id);
 
-  const newBuyOffers = await buyOffersToTradeService(companyId, skipBuyIds, SIZE_COMPANY_CACHE - skipBuyIds.length);
-  const newSellOffers = await sellOffersToTradeService(companyId, skipSellIds, SIZE_COMPANY_CACHE - skipSellIds.length);
+  if (SIZE_COMPANY_CACHE - skipBuyIds.length > 0) {
+    const newBuyOffers = await buyOffersToTradeService(companyId, skipBuyIds, SIZE_COMPANY_CACHE - skipBuyIds.length);
+    newBuyOffers.forEach((offer) => setCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
+  }
 
-  newBuyOffers.forEach((offer) => setCache(`${BUY_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
-  newSellOffers.forEach((offer) => setCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
+  if (SIZE_COMPANY_CACHE - skipSellIds.length > 0) {
+    const newSellOffers = await sellOffersToTradeService(
+      companyId,
+      skipSellIds,
+      SIZE_COMPANY_CACHE - skipSellIds.length
+    );
+    newSellOffers.forEach((offer) => setCache(`${SELL_OFFERS_KEY}-${companyId}-${offer.id}`, offer));
+  }
 };
 
 const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], companyId: number) => {
@@ -113,7 +121,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
       const updateBuyOfferTime = await updateBuyOfferService(buyOffers[i]);
       const updateSellOfferTime = await updateSellOfferService(sellOffers[j]);
 
-      const updateMoneyTime = await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[i].userId);
+      const updateMoneyTime = await manageMoney(buyOffers[i], amount, price, buyOffers[i].userId, sellOffers[j].userId);
 
       const updateStockTime = await updateStockByUserAndCompanyIdService(buyOffers[i].userId, companyId, amount);
 
@@ -122,7 +130,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
         i++;
       }
       if (sellOffers[j].amount === 0) {
-        removeCache(`${SELL_OFFERS_KEY}-${companyId}-${buyOffers[j].id}`);
+        removeCache(`${SELL_OFFERS_KEY}-${companyId}-${sellOffers[j].id}`);
         j++;
       }
 

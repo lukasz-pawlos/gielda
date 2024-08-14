@@ -10,6 +10,6 @@ AppDataSource.initialize()
     trade();
     setInterval(async () => {
       await createTradeCpuLog(Number(process.env.TRADE_ID));
-    }, 1000);
+    }, 5000);
   })
   .catch((error) => console.log(error));

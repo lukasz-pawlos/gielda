@@ -26,7 +26,8 @@ dotenv.config({ path: `${process.cwd()}/./.env` });
 
 const BUY_OFFERS_KEY = "buyOffers";
 const SELL_OFFERS_KEY = "sellOffers";
-const SIZE_COMPANY_CACHE = Number(process.env.CASHE_TIME);
+const SIZE_COMPANY_CACHE = Number(process.env.NUM_OF_CACHE);
+const TRANSACTION_TIME = Number(process.env.TRANSACTION_TIME);
 let companiesIds: number[] = [];
 
 export const trade = async () => {
@@ -81,10 +82,15 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
   let i = 0,
     j = 0;
   while (i < buyOffers.length && j < sellOffers.length) {
+    if (+buyOffers[i].max_price < +sellOffers[j].min_price) {
+      break; // Nie ma sensu kontynuować, bo ceny nie będą się pokrywać
+    }
     if (+buyOffers[i].max_price < +sellOffers[j].min_price || buyOffers[i].userId === sellOffers[j].userId) {
       j++;
     } else {
       const start = new Date();
+      let numberOfBuyOffers = 0;
+      let numberOfSellOffers = 0;
 
       const amount = Math.min(buyOffers[i].amount, sellOffers[j].amount);
       if (amount === 0) {
@@ -127,10 +133,12 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
 
       if (buyOffers[i].amount === 0) {
         removeCache(`${BUY_OFFERS_KEY}-${companyId}-${buyOffers[i].id}`);
+        numberOfBuyOffers++;
         i++;
       }
       if (sellOffers[j].amount === 0) {
         removeCache(`${SELL_OFFERS_KEY}-${companyId}-${sellOffers[j].id}`);
+        numberOfSellOffers++;
         j++;
       }
 
@@ -145,10 +153,12 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
           updateSellOfferTime +
           updateMoneyTime +
           updateStockTime,
-        numberOfSellOffers: amount,
-        numberOfBuyOffers: amount,
+        numberOfSellOffers,
+        numberOfBuyOffers,
       };
       await createLog(message, "useTrade.csv");
+
+      // await new Promise((resolve) => setTimeout(resolve, TRANSACTION_TIME));
     }
   }
 };

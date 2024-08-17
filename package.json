@@ -4,11 +4,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon ./src/index.ts",
-    "prod": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create -d src/db/dataSource.ts && ts-node ./src/index.ts",
+    "prod": "npm run db:reset && ts-node ./src/index.ts",
     "prod2": "ts-node ./src/index.ts",
     "trade": "ts-node ./src/trade.ts",
     "db:create": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create -d src/db/dataSource.ts",
-    "db:drop": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop -d src/db/dataSource.ts"
+    "db:drop": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop -d src/db/dataSource.ts",
+    "db:reset": "ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop -d src/db/dataSource.ts && ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create -d src/db/dataSource.ts"
   },
   "keywords": [],
   "author": "",

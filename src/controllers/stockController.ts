@@ -24,7 +24,7 @@ export const createStock = catchAsync(
       apiTime: end.getTime() - start.getTime(),
       applicationTime: new Date().getTime() - start.getTime(),
       databaseTime,
-      endpointUrl: `/stockrate${req.path}`,
+      endpointUrl: `/stock${req.path}`,
     };
 
     createLog(ApiLog, "apiUse.csv");
@@ -51,7 +51,7 @@ export const getStockByUserId = catchAsync(async (req: Request, res: Response) =
     apiTime: end.getTime() - start.getTime(),
     applicationTime: new Date().getTime() - start.getTime(),
     databaseTime,
-    endpointUrl: `/stockrate${req.path}`,
+    endpointUrl: `/stock${req.path}`,
   };
 
   createLog(ApiLog, "apiUse.csv");

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: `${process.cwd()}/./.env` });
 
-const cache = new NodeCache({ stdTTL: Number(process.env.CASHE_TIME) });
+const cache = new NodeCache({ stdTTL: Number(process.env.CACHE_TIME) });
 
 export const getCache = <T>(prefix: string): T[] => {
   const keys = cache.keys().filter((key) => key.startsWith(prefix));

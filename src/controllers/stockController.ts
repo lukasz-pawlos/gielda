@@ -5,11 +5,16 @@ import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { createStockService, getStockByUserIdService, getStockService } from "../services/stockService";
 import { StockRequest } from "../types/request/StockRequest";
 import { catchAsync } from "../utils/catchAsync";
-import { APILog, createLog } from "../utils/logger/createlog";
+import { createLog } from "../utils/logger/createlog";
+import { APILog } from "../database/logDB/services/addLog";
+import { ApiMethod } from "../database/logDB/entities/MarketLogEntities";
 
 export const createStock = catchAsync(
   async (req: TypedRequestBody<StockRequest>, res: Response, next: NextFunction) => {
     const start = new Date();
+    const requestId: string = Array.isArray(req.headers["x-request-id"])
+      ? req.headers["x-request-id"][0]
+      : req.headers["x-request-id"] || "default-request-id";
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) return next(new AppError("Validation errors", 400, errors.array()));
@@ -20,14 +25,14 @@ export const createStock = catchAsync(
     res.json({ message: "Stock added", result });
 
     const ApiLog: APILog = {
-      apiMethod: "POST",
-      apiTime: end.getTime() - start.getTime(),
+      apiMethod: ApiMethod.POST,
       applicationTime: new Date().getTime() - start.getTime(),
       databaseTime,
       endpointUrl: `/stock${req.path}`,
+      requestId,
     };
 
-    createLog(ApiLog, "apiUse.csv");
+    createLog(ApiLog, "marketLog");
   }
 );
 
@@ -39,6 +44,9 @@ export const getStock = catchAsync(async (req: Request, res: Response) => {
 
 export const getStockByUserId = catchAsync(async (req: Request, res: Response) => {
   const start = new Date();
+  const requestId: string = Array.isArray(req.headers["x-request-id"])
+    ? req.headers["x-request-id"][0]
+    : req.headers["x-request-id"] || "default-request-id";
   const userId: any = req.params.id;
 
   const { result, databaseTime } = await getStockByUserIdService(userId);
@@ -47,12 +55,12 @@ export const getStockByUserId = catchAsync(async (req: Request, res: Response) =
   res.json(result);
 
   const ApiLog: APILog = {
-    apiMethod: "POST",
-    apiTime: end.getTime() - start.getTime(),
+    apiMethod: ApiMethod.POST,
     applicationTime: new Date().getTime() - start.getTime(),
     databaseTime,
     endpointUrl: `/stock${req.path}`,
+    requestId,
   };
 
-  createLog(ApiLog, "apiUse.csv");
+  createLog(ApiLog, "marketLog");
 });

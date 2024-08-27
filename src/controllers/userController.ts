@@ -11,28 +11,34 @@ import { AppError } from "../utils/appError";
 import { UserRequest } from "../types/request/UserRequest";
 import { TypedRequestBody } from "../utils/TypedRequestBody";
 import { catchAsync } from "../utils/catchAsync";
-import { APILog, createLog } from "../utils/logger/createlog";
+import { createLog } from "../utils/logger/createlog";
+import { APILog } from "../database/logDB/services/addLog";
+import { ApiMethod } from "../database/logDB/entities/MarketLogEntities";
 
 export const allUsers = catchAsync(async (req: Request, res: Response) => {
   const start = new Date();
+  const requestId = req.headers["x-request-id"];
   const { result, databaseTime } = await findAllUsersService();
   const end = new Date();
 
   res.json({ result });
 
-  const ApiLog: APILog = {
-    apiMethod: "GET",
-    apiTime: end.getTime() - start.getTime(),
-    applicationTime: new Date().getTime() - start.getTime(),
-    databaseTime,
-    endpointUrl: `/user${req.path}`,
-  };
+  // const ApiLog: APILog = {
+  //   apiMethod: ApiMethod.GET,
+  //   applicationTime: new Date().getTime() - start.getTime(),
+  //   databaseTime,
+  //   endpointUrl: `/user${req.path}`,
+  //   requestId,
+  // };
 
-  createLog(ApiLog, "apiUse.csv");
+  // createLog(ApiLog, "marketLog");
 });
 
 export const getUser = catchAsync(async (req: Request, res: Response) => {
   const start = new Date();
+  const requestId: string = Array.isArray(req.headers["x-request-id"])
+    ? req.headers["x-request-id"][0]
+    : req.headers["x-request-id"] || "default-request-id";
   const userId: any = req.params.id;
 
   const { result, databaseTime } = await getUserService(userId);
@@ -41,18 +47,21 @@ export const getUser = catchAsync(async (req: Request, res: Response) => {
   res.json(result);
 
   const ApiLog: APILog = {
-    apiMethod: "GET",
-    apiTime: end.getTime() - start.getTime(),
+    apiMethod: ApiMethod.GET,
     applicationTime: new Date().getTime() - start.getTime(),
     databaseTime,
     endpointUrl: `/user${req.path}`,
+    requestId,
   };
 
-  createLog(ApiLog, "apiUse.csv");
+  createLog(ApiLog, "marketLog");
 });
 
 export const createUser = catchAsync(async (req: TypedRequestBody<UserRequest>, res: Response, next: NextFunction) => {
   const start = new Date();
+  const requestId: string = Array.isArray(req.headers["x-request-id"])
+    ? req.headers["x-request-id"][0]
+    : req.headers["x-request-id"] || "default-request-id";
   const error = validationResult(req);
   if (!error.isEmpty()) {
     return next(new AppError("Validation errors", 400, error.array()));
@@ -63,18 +72,21 @@ export const createUser = catchAsync(async (req: TypedRequestBody<UserRequest>, 
   res.json({ message: "User added", result });
 
   const ApiLog: APILog = {
-    apiMethod: "POST",
-    apiTime: end.getTime() - start.getTime(),
+    apiMethod: ApiMethod.POST,
     applicationTime: new Date().getTime() - start.getTime(),
     databaseTime,
     endpointUrl: `/user${req.path}`,
+    requestId,
   };
 
-  createLog(ApiLog, "apiUse.csv");
+  createLog(ApiLog, "marketLog");
 });
 
 export const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const start = new Date();
+  const requestId: string = Array.isArray(req.headers["x-request-id"])
+    ? req.headers["x-request-id"][0]
+    : req.headers["x-request-id"] || "default-request-id";
   const userId: any = req.params.id;
   const databaseTime = await deleteUserService(userId);
   const end = new Date();
@@ -82,19 +94,22 @@ export const deleteUser = catchAsync(async (req: Request, res: Response) => {
   res.status(200).json({ message: "User deleted successfully" });
 
   const ApiLog: APILog = {
-    apiMethod: "DELETE",
-    apiTime: end.getTime() - start.getTime(),
+    apiMethod: ApiMethod.DELETE,
     applicationTime: new Date().getTime() - start.getTime(),
     databaseTime,
     endpointUrl: `/user${req.path}`,
+    requestId,
   };
 
-  createLog(ApiLog, "apiUse.csv");
+  createLog(ApiLog, "marketLog");
 });
 
 export const addUserMoney = catchAsync(
   async (req: TypedRequestBody<{ userId: number; money: number }>, res: Response) => {
     const start = new Date();
+    const requestId: string = Array.isArray(req.headers["x-request-id"])
+      ? req.headers["x-request-id"][0]
+      : req.headers["x-request-id"] || "default-request-id";
     const { userId, money } = req.body;
     const databaseTime = await updateUserMoney(userId, money);
     const end = new Date();
@@ -102,13 +117,13 @@ export const addUserMoney = catchAsync(
     res.status(200).json({ message: "Money added successfully" });
 
     const ApiLog: APILog = {
-      apiMethod: "POST",
-      apiTime: end.getTime() - start.getTime(),
+      apiMethod: ApiMethod.POST,
       applicationTime: new Date().getTime() - start.getTime(),
       databaseTime,
       endpointUrl: `/user${req.path}`,
+      requestId,
     };
 
-    createLog(ApiLog, "apiUse.csv");
+    createLog(ApiLog, "marketLog");
   }
 );

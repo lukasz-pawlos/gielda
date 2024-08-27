@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { DataSource } from "typeorm";
-import { createDatabase } from "typeorm-extension";
+import { createDatabase, dropDatabase } from "typeorm-extension";
 import { User } from "../entities/UsesEntitie";
 import { Stock } from "../entities/StockEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
@@ -23,9 +23,11 @@ export const AppDataSource = new DataSource({
   entities,
   synchronize: true,
   logging: false,
+  ssl: false,
 });
 
 export async function initializeDatabase() {
+  await dropDatabase({ options: AppDataSource.options });
   await createDatabase({ options: AppDataSource.options });
   await AppDataSource.initialize();
 }

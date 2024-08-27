@@ -1,4 +1,3 @@
-import { getCompanysIdServices } from "./companyService";
 import {
   buyOffersToTradeService,
   isBuyOfferExistService,
@@ -20,7 +19,8 @@ import { updateStockByUserAndCompanyIdService } from "./stockService";
 import { updateUserMoney } from "./userService";
 import { getCache, removeCache, setCache } from "../utils/useCache";
 import dotenv from "dotenv";
-import { createLog, TradeLog } from "../utils/logger/createlog";
+import { createLog } from "../utils/logger/createlog";
+import { TradeLogData } from "../database/logDB/services/addLog";
 
 dotenv.config({ path: `${process.cwd()}/./.env` });
 
@@ -144,7 +144,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
 
       const end = new Date();
 
-      const message: TradeLog = {
+      const message: TradeLogData = {
         applicationTime: end.getTime() - start.getTime(),
         databaseTime:
           tradeTime +
@@ -156,7 +156,7 @@ const startTrade = async (buyOffers: BuyOfferRes[], sellOffers: SellOfferRes[], 
         numberOfSellOffers,
         numberOfBuyOffers,
       };
-      await createLog(message, "useTrade.csv");
+      await createLog(message, "tradeLog");
 
       // await new Promise((resolve) => setTimeout(resolve, TRANSACTION_TIME));
     }

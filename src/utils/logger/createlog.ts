@@ -1,32 +1,9 @@
 import si from "systeminformation";
 import { log } from "./logger";
+import { APILog, CpuLog, LogType, TradeCpuLog, TradeLogData } from "../../database/logDB/services/addLog";
 
-interface StockLog {
-  cpuUsage: number;
-  memoryUsage: number;
-}
-
-export interface APILog {
-  apiMethod: "GET" | "POST" | "DELETE";
-  apiTime: number;
-  applicationTime: number;
-  databaseTime: number;
-  endpointUrl: string;
-}
-
-export interface TradeCpuLog extends StockLog {
-  replicaId: number;
-}
-
-export interface TradeLog {
-  applicationTime: number;
-  databaseTime: number;
-  numberOfSellOffers: number;
-  numberOfBuyOffers: number;
-}
-
-export const createLog = async (info: APILog | TradeLog, path: string) => {
-  log("info", info, `logs/${path}`);
+export const createLog = async (info: APILog | TradeLogData, logType: LogType) => {
+  log("info", info, logType);
 };
 
 const cpuMemoryUse = async () => {
@@ -36,7 +13,7 @@ const cpuMemoryUse = async () => {
   const cpuUsage = parseFloat(cpuLoad.currentLoad.toFixed(2));
   const memoryUsage = parseFloat(((memory.active / memory.total) * 100).toFixed(2));
 
-  const message: StockLog = {
+  const message: CpuLog = {
     cpuUsage,
     memoryUsage,
   };
@@ -46,12 +23,12 @@ const cpuMemoryUse = async () => {
 
 export const createStockLog = async () => {
   const message = await cpuMemoryUse();
-  log("info", message, "logs/stockUse.csv");
+  log("info", message, "marketCpu");
 };
 
 export const createTradeCpuLog = async (replicaId: number) => {
   const cpuMemory = await cpuMemoryUse();
   const message: TradeCpuLog = { ...cpuMemory, replicaId };
 
-  log("info", message, `logs/tradeCpu${replicaId}.csv`);
+  log("info", message, "tradeCpu");
 };

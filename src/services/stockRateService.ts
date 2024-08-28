@@ -23,6 +23,11 @@ export const createStockRateService = async (newStockRateDate: StockRateRequest)
   const start = new Date();
   const { companyId, rate } = newStockRateDate;
 
+  // Walidacja wartości kursu
+  if (rate <= 0) {
+    throw new AppError("Invalid stock rate: Rate must be greater than 0", 400);
+  }
+
   const company = await Company.findOne({ where: { id: companyId } });
 
   if (!company) {
@@ -42,8 +47,12 @@ export const createStockRateService = async (newStockRateDate: StockRateRequest)
 
 export const updateStockRateByCompanyIdService = async (stockRateDate: StockRateRequest) => {
   const start = new Date();
-
   const { companyId, rate } = stockRateDate;
+
+  // Walidacja wartości kursu
+  if (rate <= 0) {
+    throw new AppError("Invalid stock rate: Rate must be greater than 0", 400);
+  }
 
   const company = await Company.findOne({ where: { id: companyId } });
 
@@ -51,6 +60,7 @@ export const updateStockRateByCompanyIdService = async (stockRateDate: StockRate
     throw new AppError("Company not found", 404);
   }
 
+  // Ustawienie aktualnego kursu na nieaktualny
   await StockRate.update({ company, actual: true }, { actual: false });
 
   const newStockRate = StockRate.save({

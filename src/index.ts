@@ -10,7 +10,7 @@ import { initializeLogDatabase, LogAppDataSource } from "./database/logDB/logDat
 const app = express();
 app.use(express.json());
 dotenv.config({ path: `${process.cwd()}/./.env` });
-const PORT = process.env.APP_PORT || 4000;
+const PORT = process.env.APP_PORT || 3000;
 
 APPROUTER.forEach(({ path, router }) => app.use(`/api/${path}`, router));
 

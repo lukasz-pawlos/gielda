@@ -5,7 +5,7 @@ import { Company } from "../entities/CompanyEntities";
 import { BuyOffer } from "../entities/BuyOfferEntitie";
 import { BuyOfferRes } from "../types/response/BuyOfferRes";
 import { In, Not, Raw } from "typeorm";
-import { updateUserService } from "./userService";
+import { updateUserMoney, updateUserService } from "./userService";
 
 export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) => {
   const start = new Date();
@@ -18,14 +18,13 @@ export const createBuyOfferService = async (newBuyOfferData: BuyOfferRequest) =>
     throw new AppError("User or Company not found", 404);
   }
 
-  const estimatedPrice = amount * +max_price;
+  const estimatedPrice = Number(-1 * (amount * +max_price));
 
   if (+user.money - +estimatedPrice < 0) {
     throw new AppError("Not enough money", 402);
   }
 
-  user.money -= +estimatedPrice;
-  await user.save();
+  await updateUserMoney(userId, estimatedPrice);
 
   const newBuyOffer = await BuyOffer.save({
     user,
@@ -49,11 +48,10 @@ export const deleteBuyOfferService = async (buyOfferId: number) => {
   if (!buyOffer) {
     throw new AppError("Delete offer not found", 404);
   }
+  const estimatedPrice = Number(+buyOffer.amount * +buyOffer.max_price);
 
-  buyOffer.user.money += +buyOffer.amount * +buyOffer.max_price;
-
+  await updateUserMoney(buyOffer.user.id, estimatedPrice);
   await BuyOffer.delete({ id: buyOfferId });
-  await updateUserService(buyOffer.user);
   const end = new Date();
 
   return end.getTime() - start.getTime();
@@ -107,11 +105,9 @@ export const removeExpiredBuyOffersService = async (companyId: number) => {
 
   if (expiredOffers.length > 0) {
     for (let i = 0; i < expiredOffers.length; i++) {
-      const money = +expiredOffers[i].user.money + expiredOffers[i].amount * +expiredOffers[i].max_price;
-      expiredOffers[i].user.money = money;
+      const money = Number(expiredOffers[i].amount * +expiredOffers[i].max_price);
       expiredOffers[i].actual = false;
-
-      await expiredOffers[i].user.save();
+      await updateUserMoney(expiredOffers[i].user.id, money);
       await expiredOffers[i].save();
     }
   }

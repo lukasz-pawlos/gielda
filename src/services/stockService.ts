@@ -3,6 +3,7 @@ import { Stock } from "../entities/StockEntities";
 import { User } from "../entities/UsesEntitie";
 import { Company } from "../entities/CompanyEntities";
 import { AppError } from "../utils/appError";
+import { AppDataSource } from "../database/dataSource";
 
 export const createStockService = async (newStockData: StockRequest) => {
   const start = new Date();
@@ -64,19 +65,27 @@ export const getStockByUserIdService = async (userId: number) => {
 
 export const updateStockByUserAndCompanyIdService = async (userId: number, companyId: number, amount: number) => {
   const start = new Date();
-  const stock = await Stock.findOne({
-    where: { company: { id: companyId }, user: { id: userId } },
-    relations: { user: true, company: true },
+  const entityManager = AppDataSource.manager;
+
+  await entityManager.transaction(async (transactionalEntityManager) => {
+    const stock = await transactionalEntityManager.findOne(Stock, {
+      where: { company: { id: companyId }, user: { id: userId } },
+      lock: { mode: "pessimistic_write" },
+    });
+
+    if (!stock) {
+      await createStockService({ companyId, userId, amount });
+      const end = new Date();
+
+      return end.getTime() - start.getTime();
+    }
+
+    if (stock) {
+      stock.amount = +stock.amount + amount;
+      await transactionalEntityManager.save(stock);
+    }
   });
 
-  if (!stock) {
-    await createStockService({ companyId, userId, amount });
-    const end = new Date();
-
-    return end.getTime() - start.getTime();
-  }
-  stock.amount = +stock.amount + amount;
-  await stock.save();
   const end = new Date();
 
   return end.getTime() - start.getTime();

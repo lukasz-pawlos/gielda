@@ -40,6 +40,7 @@ export const trade = async () => {
   }
 
   for (const companyId of companiesIds) {
+    const start = new Date();
     await removeExpiredBuyOffersService(companyId);
     await removeExpiredSellOffersService(companyId);
 
@@ -49,7 +50,7 @@ export const trade = async () => {
     const sellOffers = getCache<SellOfferRes>(`${SELL_OFFERS_KEY}-${companyId}`);
 
     if (!buyOffers.length || !sellOffers.length) continue;
-
+    console.log("GETTING DATA TIME: " + (new Date().getTime() - start.getTime()));
     await startTrade(buyOffers, sellOffers, companyId);
   }
 

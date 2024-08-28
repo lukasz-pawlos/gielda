@@ -5,6 +5,7 @@ import { AppError } from "../utils/appError";
 import { SellOffer } from "../entities/SellOfferEntitie";
 import { In, Not, Raw } from "typeorm";
 import { SellOfferRes } from "../types/response/SellOfferRes";
+import { updateStockByUserAndCompanyIdService } from "./stockService";
 
 export const createSellOfferService = async (newSellOfferData: SellOfferRequest) => {
   const start = new Date();
@@ -21,9 +22,7 @@ export const createSellOfferService = async (newSellOfferData: SellOfferRequest)
     throw new AppError("Not enough stock", 402);
   }
 
-  stock.amount -= +amount;
-
-  await stock.save();
+  await updateStockByUserAndCompanyIdService(userId, companyId, -1 * amount);
 
   const newSellOffer = await SellOffer.save({
     user,
@@ -107,10 +106,9 @@ export const removeExpiredSellOffersService = async (companyId: number) => {
 
   if (expiredOffers.length > 0) {
     for (let i = 0; i < expiredOffers.length; i++) {
-      expiredOffers[i].stock.amount += expiredOffers[i].amount;
+      await updateStockByUserAndCompanyIdService(expiredOffers.userId, companyId, expiredOffers[i].amount);
       expiredOffers[i].actual = false;
 
-      await expiredOffers[i].stock.save();
       await expiredOffers[i].save();
     }
   }

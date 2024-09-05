@@ -106,7 +106,7 @@ export const removeExpiredSellOffersService = async (companyId: number) => {
 
   if (expiredOffers.length > 0) {
     for (let i = 0; i < expiredOffers.length; i++) {
-      await updateStockByUserAndCompanyIdService(expiredOffers.userId, companyId, expiredOffers[i].amount);
+      await updateStockByUserAndCompanyIdService(expiredOffers[i].userId, companyId, expiredOffers[i].amount);
       expiredOffers[i].actual = false;
 
       await expiredOffers[i].save();
